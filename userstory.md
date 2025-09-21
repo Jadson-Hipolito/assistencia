@@ -91,8 +91,7 @@ Este documento descreve os User Stories criados a partir da Lista de Requisitos 
 
 |               |                                                                |
 | ------------- | :------------------------------------------------------------- |
-| **Descrição** | O sistema deve permitir a criação de ordens de serviço para cada solicitação de reparo ou manutenção, com a possibilidade de incluir informações sobre o cliente, descrição do problema e quaisquer detalhes relevantes. Alem disso o sistema deve permitir a edição dos dados da ordem de serviço, a consulta pela ordem de serviço e qualquer dado contido nele.
-Permitir que os funcionários autorizados encerrem ordens de serviço após a conclusão das atividades(include manter ordem de serviço). O sistema deve fornecer a capacidade de gerar relatórios diversos, como histórico de serviços realizados, faturamento por período, entre outros(include manter ordem de serviço). | 
+| **Descrição** | O sistema deve permitir a criação de ordens de serviço para cada solicitação de reparo ou manutenção, com a possibilidade de incluir informações sobre o cliente, descrição do problema e quaisquer detalhes relevantes, a edição dos dados da ordem de serviço, a consulta pela ordem de serviço e qualquer dado contido nele. Alem disso permitir que os funcionários autorizados encerrem ordens de serviço após a conclusão das atividades. E fornecer a capacidade de gerar relatórios diversos, como histórico de serviços realizados, faturamento por período, entre outros. | 
 | **Requisitos envolvidos** |                                                    |
 | ------------- | :------------------------------------------------------------- |
 | RF01          | Abrir ordem de Serviço |
