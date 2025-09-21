@@ -124,8 +124,7 @@ Este documento descreve os User Stories criados a partir da Lista de Requisitos 
 
 |               |                                                                |
 | ------------- | :------------------------------------------------------------- |
-| **Descrição** | O sistema deve permitir o cadastro detalhado do equipamento, incluindo informações como o id, tipo, marca, modelo e quantidade. O sistema deve permitir a consulta do equipamento através do id do mesmo (include manter Equipamento). O	sistema	deve	permitir	a	exclusão	do	cliente	(include	manter
-Equipamento). | 
+| **Descrição** | O sistema deve permitir o cadastro detalhado do equipamento, incluindo informações como o id, tipo, marca, modelo e quantidade. Alem disso o sistema deve permitir a consulta do equipamento através do id do mesmo	e	a	exclusão	da	ferramenta. | 
 | **Requisitos envolvidos** |                                                    |
 | ------------- | :------------------------------------------------------------- |
 | RF01          | Cadastrar Equipamento |
