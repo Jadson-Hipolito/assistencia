@@ -1,44 +1,106 @@
 ```mermaid
 erDiagram
-
-    EMPREGADO {
-        string codigo PK
+    PESSOA {
+        int id PK
         string nome
+        date data_nasc
+    }
+
+    CONTATO {
+        int id PK
+        string telefone
         string email
-        string tipo
+        string whatsapp
     }
 
-    HORARIO_LIVRE {
-        string codigo_empregado PK
-        int horas_mensais
-        int horas_minimas_dia
+    ENDERECO {
+        int id PK
+        string rua
+        string numero
+        string bairro
+        string cidade
+        string estado
     }
 
-    HORARIO_FIXO {
-        string codigo_empregado PK
+    CLIENTE {
+        int id_cliente PK, FK
     }
 
-    DIA_SEMANA {
-        string codigo PK
+    FUNCIONARIO {
+        int id_funcionario PK, FK
+        float salario
+        string carteira_de_trabalho
+        string horario_expediente
+    }
+
+    CARGO {
+        int id PK
         string nome
+        float salario_base
     }
 
-    TURNO {
-        string id PK
-        time horario_inicio
-        time horario_fim
+    ORDEM_SERVICO {
+        int id PK
+        string nome_cliente FK
+        string nome_funcionario FK
+        date data_emissao
+        float valor_total
+        string situacao
+        string descricao
     }
 
-    PONTO {
-        string empregado_id
-        string dia_id
-        string turno_id
-        time entrada
-        time saida
+    ITEM_OS {
+        int id PK
+        string descricao
+        int equipamento_id FK
     }
 
-    EMPREGADO ||--|| HORARIO_LIVRE : possui
-    EMPREGADO ||--|| HORARIO_FIXO : possui
+    EQUIPAMENTO {
+        int id PK
+        string tipo
+        string marca
+        string modelo
+        int quantidade
+    }
+
+    VISITA_TECNICA {
+        int id PK
+        int ordem_id FK
+        int funcionario_id FK
+        string horario
+    }
+
+    CONTA_RECEBER {
+        int id PK
+        int ordem_id FK
+        float valor
+        date data_pagamento
+        float acrescimo
+    }
+
+    PAGAR_CONTA {
+        int id PK
+        int conta_id FK
+        date data_vencimento
+        float valor
+        string descricao
+    }
+
+    %% RELACIONAMENTOS
+    PESSOA ||--|| CONTATO : possui
+    PESSOA ||--|| ENDERECO : reside
+    PESSOA ||--|| CLIENTE : especializa
+    PESSOA ||--|| FUNCIONARIO : especializa
+    FUNCIONARIO }o--|| CARGO : ocupa
+    ORDEM_SERVICO }o--|| CLIENTE : pertence
+    ORDEM_SERVICO }o--|| FUNCIONARIO : atendida_por
+    ORDEM_SERVICO ||--o{ ITEM_OS : contem
+    ITEM_OS }o--|| EQUIPAMENTO : utiliza
+    VISITA_TECNICA }o--|| ORDEM_SERVICO : refere
+    VISITA_TECNICA }o--|| FUNCIONARIO : executada_por
+    CONTA_RECEBER ||--|| ORDEM_SERVICO : referente
+    PAGAR_CONTA ||--|| CONTA_RECEBER : paga
+
 
     EMPREGADO ||--o{ PONTO : registra
     DIA_SEMANA ||--o{ PONTO : ocorre_em
