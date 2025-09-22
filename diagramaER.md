@@ -99,10 +99,4 @@ erDiagram
     VISITA_TECNICA }o--|| ORDEM_SERVICO : refere
     VISITA_TECNICA }o--|| FUNCIONARIO : executada_por
     CONTA_RECEBER ||--|| ORDEM_SERVICO : referente
-    PAGAR_CONTA ||--|| CONTA_RECEBER : paga
-
-
-    EMPREGADO ||--o{ PONTO : registra
-    DIA_SEMANA ||--o{ PONTO : ocorre_em
-    TURNO ||--o{ PONTO : no_turno
-
+    PAGAR_CONTA ||--|| CONTA_RECEBER : paga   
