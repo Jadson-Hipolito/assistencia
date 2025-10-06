@@ -96,11 +96,11 @@ erDiagram
     PESSOA ||--|| FUNCIONARIO : especializa
 
     CARGO ||--|{ FUNCIONARIO : possui
-    CLIENTE ||--o{ ORDEM_SERVICO : solicita
+    CLIENTE ||--|{ ORDEM_SERVICO : solicita
     FUNCIONARIO ||--o{ ORDEM_SERVICO : executa
     ORDEM_SERVICO ||--|{ ITEM_OS : contem
     EQUIPAMENTO ||--|{ ITEM_OS : compoe
-    ORDEM_SERVICO ||--o{ VISITA_TECNICA : gera
-    FUNCIONARIO ||--o{ VISITA_TECNICA : realiza
+    ORDEM_SERVICO ||--|{ VISITA_TECNICA : gera
+    FUNCIONARIO ||--|{ VISITA_TECNICA : realiza
     ORDEM_SERVICO ||--|| CONTA_RECEBER : gera
     CONTA_RECEBER ||--|| PAGAR_CONTA : vinculada
