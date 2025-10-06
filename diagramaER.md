@@ -31,6 +31,7 @@ erDiagram
         float salario
         string carteira_de_trabalho
         string horario_expediente
+        int cargo_id FK
     }
 
     CARGO {
@@ -44,6 +45,7 @@ erDiagram
         string nome_cliente FK
         string nome_funcionario FK
         date data_emissao
+        date data_inicio
         float valor_total
         string situacao
         string descricao
@@ -93,13 +95,12 @@ erDiagram
     PESSOA ||--|| CLIENTE : especializa
     PESSOA ||--|| FUNCIONARIO : especializa
 
-    CARGO ||--o{ FUNCIONARIO : possui
+    CARGO ||--|{ FUNCIONARIO : possui
     CLIENTE ||--o{ ORDEM_SERVICO : solicita
     FUNCIONARIO ||--o{ ORDEM_SERVICO : executa
-    ORDEM_SERVICO ||--o{ ITEM_OS : contem
-    EQUIPAMENTO ||--o{ ITEM_OS : utilizado_em
+    ORDEM_SERVICO ||--|{ ITEM_OS : contem
+    EQUIPAMENTO ||--|{ ITEM_OS : compoe
     ORDEM_SERVICO ||--o{ VISITA_TECNICA : gera
     FUNCIONARIO ||--o{ VISITA_TECNICA : realiza
     ORDEM_SERVICO ||--|| CONTA_RECEBER : gera
     CONTA_RECEBER ||--|| PAGAR_CONTA : vinculada
-
