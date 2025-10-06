@@ -93,7 +93,7 @@ erDiagram
     PESSOA ||--|| CLIENTE : especializa
     PESSOA ||--|| FUNCIONARIO : especializa
 
-    CARGO ||--o{ FUNCIONARIO : possui%% 1 cargo - vários funcionários
+    FUNCIONARIO }o--|| CARGO : exerce >
     CLIENTE ||--o{ ORDEM_SERVICO : solicita
     FUNCIONARIO ||--o{ ORDEM_SERVICO : executa
     ORDEM_SERVICO ||--o{ ITEM_OS : contem
