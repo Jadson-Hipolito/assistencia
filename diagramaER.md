@@ -93,7 +93,7 @@ erDiagram
     PESSOA ||--|| CLIENTE : especializa
     PESSOA ||--|| FUNCIONARIO : especializa
 
-    FUNCIONARIO }o--|| CARGO : exerce >
+    FUNCIONARIO }o--|| CARGO : exerce 
     CLIENTE ||--o{ ORDEM_SERVICO : solicita
     FUNCIONARIO ||--o{ ORDEM_SERVICO : executa
     ORDEM_SERVICO ||--o{ ITEM_OS : contem
