@@ -52,6 +52,7 @@ erDiagram
     ITEM_OS {
         int id PK
         string descricao
+        int ordem_servico_id FK
         int equipamento_id FK
     }
 
@@ -91,12 +92,14 @@ erDiagram
     PESSOA ||--|| ENDERECO : reside
     PESSOA ||--|| CLIENTE : especializa
     PESSOA ||--|| FUNCIONARIO : especializa
-    FUNCIONARIO }o--|| CARGO : ocupa
-    ORDEM_SERVICO }o--|| CLIENTE : pertence
-    ORDEM_SERVICO }o--|| FUNCIONARIO : atendida_por
+
+    CARGO ||--o{ FUNCIONARIO : possui
+    CLIENTE ||--o{ ORDEM_SERVICO : solicita
+    FUNCIONARIO ||--o{ ORDEM_SERVICO : executa
     ORDEM_SERVICO ||--o{ ITEM_OS : contem
-    ITEM_OS }o--|| EQUIPAMENTO : utiliza
-    VISITA_TECNICA }o--|| ORDEM_SERVICO : refere
-    VISITA_TECNICA }o--|| FUNCIONARIO : executada_por
-    CONTA_RECEBER ||--|| ORDEM_SERVICO : referente
-    PAGAR_CONTA ||--|| CONTA_RECEBER : paga   
+    EQUIPAMENTO ||--o{ ITEM_OS : utilizado_em
+    ORDEM_SERVICO ||--o{ VISITA_TECNICA : gera
+    FUNCIONARIO ||--o{ VISITA_TECNICA : realiza
+    ORDEM_SERVICO ||--|| CONTA_RECEBER : gera
+    CONTA_RECEBER ||--|| PAGAR_CONTA : vinculada
+
