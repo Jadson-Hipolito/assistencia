@@ -1,4 +1,5 @@
 
+
 # Daily 
 
 | Data       |  Tarefa                       | Proxima tarefa  |  Status |  Autor    
@@ -9,5 +10,20 @@
 | 22/09/2020 |  Documento completo com o detalhamento de todos os User Stories | Taciano     |
 | 30/04/2022 |  Adição das informações da equipe: Analista, Desenvolvedor, Revisor e Testador. | Taciano |
 
+
+
+
+
+
+
+
+Data     | Tarefa      | Proxima Tarefa  | Status | Autor   | 
+-------- | ----------- | ---------- | ------------ | -------   | 
+It1      |    ...      |    ...     |    ...       | Gerente 1 | 
+It2      |    ...      |    ...     |    ...       | Gerente 2 | 
+It3      |    ...      |    ...     |    ...       | Gerente 3 |
+It4      |    ...      |    ...     |    ...       | Gerente 4 | 
+It5      |    ...      |    ...     |    ...       | Gerente 5 | 
+It6      |    ...      |    ...     |    ...       | Gerente 6 | 
 
 
