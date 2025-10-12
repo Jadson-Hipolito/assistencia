@@ -1,12 +1,12 @@
 
 # Daily 
 
-| Data       |  Descrição                          | Autor                          |
+| Data       |  Tarefa                       | Proxima tarefa  |  Status |  Autor    
 | :--------- |  :--------------------------------: | :----------------------------- |
 | 15/09/2025 |  Elaboraçao do documento de user stories  | Jaedson |
 | 17/09/2025 |  Divisao das tarefas   | Equipe |
-| Pesquisar sobre ER  |  ...                                | ...     |
-| 12/07/2020 |  Documento completo com o detalhamento de todos os User Stories | Taciano     |
+| 19/09/2025 | Pesquisar sobre ER e seus relacionamentos |  Mariana     |
+| 22/09/2020 |  Documento completo com o detalhamento de todos os User Stories | Taciano     |
 | 30/04/2022 |  Adição das informações da equipe: Analista, Desenvolvedor, Revisor e Testador. | Taciano |
 
 
