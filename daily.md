@@ -6,7 +6,8 @@
 
 Data        |   Tarefa                                       |  Status       | Proxima Tarefa                       |  Autor   | 
 ----------- | ---------------------------------------------- | ------------- |------------------------------------- |  ------- | 
-15/09/2025  | Elaboraçao da documentaçao de user stories     |    ...        |    ...                               | Jaedson  | 
+15/09/2025  | Elaboraçao da documentaçao de user stories     |    ...        | Execusao da documentaçao de user stories | Jaedson  | 
+17/09/2025  |  Execusao da documentaçao de user stories      |               |                                       | Jaedson  |     
 17/09/2025  |   Divisao das tarefas                          |    ...        |    ...                               | Equipe   | 
 19/09/2025  |   Pesquisar sobre ER e seus relacionamentos    |  Entregado    |  Modelagem da ER                     | Mariana  |
 19/09/2025  |   Definiçao da dinâmica a ser aplicada         |  Entregado    |    ...                               | Equipe   | 
