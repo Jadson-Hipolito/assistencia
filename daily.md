@@ -21,7 +21,7 @@ Data        |   Tarefa                                       |   Proxima Tarefa 
 ----------- | ---------------------------------------------- | -------------------------------------- | ------------ | ------- | 
 15/09/2025  | Elaboraçao da documentaçao de user stories     |    ...     |    ...       | Jaedson | 
 17/09/2025  |   Divisao das tarefas                          |    ...     |    ...       | Equipe | 
-19/09/2025  |    ...      |    ...     |    ...       | Gerente 3 |
+19/09/2025  |   Pesquisar sobre ER e seus relacionamentos    |    ...     |    Entreque       |  Mariana  |
 22/09/2020  |    ...      |    ...     |    ...       | Gerente 4 | 
 It5      |    ...      |    ...     |    ...       | Gerente 5 | 
 It6      |    ...      |    ...     |    ...       | Gerente 6 | 
