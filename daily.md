@@ -2,28 +2,15 @@
 
 # Daily 
 
-| Data       |  Tarefa                       | Proxima tarefa  |  Status |  Autor    
-| :--------- |  :--------------------------------: | :----------------------------- |
-| 15/09/2025 |  Elaboraçao do documento de user stories  | Jaedson |
-| 17/09/2025 |  Divisao das tarefas   | Equipe |
-| 19/09/2025 | Pesquisar sobre ER e seus relacionamentos |  Mariana     |
-| 22/09/2020 |  Documento completo com o detalhamento de todos os User Stories | Taciano     |
-| 30/04/2022 |  Adição das informações da equipe: Analista, Desenvolvedor, Revisor e Testador. | Taciano |
 
 
-
-
-
-
-
-
-Data        |   Tarefa                                       |   Proxima Tarefa                       | Status       | Autor   | 
------------ | ---------------------------------------------- | -------------------------------------- | ------------ | ------- | 
-15/09/2025  | Elaboraçao da documentaçao de user stories     |    ...     |    ...       | Jaedson | 
-17/09/2025  |   Divisao das tarefas                          |    ...     |    ...       | Equipe | 
-19/09/2025  |   Pesquisar sobre ER e seus relacionamentos    |    ...     |    Entreque       |  Mariana  |
-22/09/2020  |    ...      |    ...     |    ...       | Gerente 4 | 
-It5      |    ...      |    ...     |    ...       | Gerente 5 | 
-It6      |    ...      |    ...     |    ...       | Gerente 6 | 
+Data        |   Tarefa                                       |  Status       | Proxima Tarefa                       |  Autor   | 
+----------- | ---------------------------------------------- | ------------- |------------------------------------- |  ------- | 
+15/09/2025  | Elaboraçao da documentaçao de user stories     |    ...        |    ...                               | Jaedson  | 
+17/09/2025  |   Divisao das tarefas                          |    ...        |    ...                               | Equipe   | 
+19/09/2025  |   Pesquisar sobre ER e seus relacionamentos    |  Entregado    |  Modelagem da ER                     | Mariana  |
+22/09/2025  |   Escolha da Ferrementa e execusao             |  Entregado    |  Revisao e Ajustes                   | Mariana  | 
+24/09/2025  |   Revisao e Ajustes                            |  Entregado    |    ...                               | Mariana  | 
+            |    ...                                         |    ...        |    ...                               |          | 
 
 
