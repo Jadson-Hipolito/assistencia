@@ -11,6 +11,4 @@ Data        |   Tarefa                                       |  Status       | P
 19/09/2025  |   Pesquisar sobre ER e seus relacionamentos    |  Entregado    |  Modelagem da ER                     | Mariana  |
 22/09/2025  |   Escolha da Ferrementa e execusao             |  Entregado    |  Revisao e Ajustes                   | Mariana  | 
 24/09/2025  |   Revisao e Ajustes                            |  Entregado    |    ...                               | Mariana  | 
-            |    ...                                         |    ...        |    ...                               |          | 
-
-
+           
