@@ -11,3 +11,6 @@ class Cliente:
     def adicionar_ordem_servico(self, ordem_servico):
         self.historico_servicos.append(ordem_servico)
 
+    def __repr__(self):
+        return f"Cliente(id={self.id_cliente}, nome={self.nome})"
+
