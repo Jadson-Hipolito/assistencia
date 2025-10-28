@@ -1,6 +1,4 @@
-from controllers.cliente_controller import ClienteController
-
-cliente_controller = ClienteController()
+from models.cliente import Cliente
 
 def menu_cliente():
     while True:
@@ -9,37 +7,58 @@ def menu_cliente():
         print("2. Consultar Cliente")
         print("3. Alterar Cliente")
         print("4. Excluir Cliente")
-        print("5. Voltar")
+        print("0. Voltar")
         opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            nome = input("Nome: ")
-            cpf = input("CPF: ")
-            data_nasc = input("Data Nascimento (YYYY-MM-DD): ")
-            endereco = input("Endereço: ")
-            telefone = input("Telefone: ")
-            cliente = cliente_controller.cadastrar_cliente(nome, cpf, data_nasc, endereco, telefone)
-            print(f"Cliente {cliente.nome} cadastrado com ID {cliente.id_cliente}")
+            cadastrar_cliente()
         elif opcao == "2":
-            id_cliente = int(input("ID do cliente: "))
-            cliente = cliente_controller.consultar_cliente(id_cliente)
-            if cliente:
-                print(vars(cliente))
-            else:
-                print("Cliente não encontrado.")
+            consultar_cliente()
         elif opcao == "3":
-            id_cliente = int(input("ID do cliente: "))
-            nome = input("Novo nome (enter para manter): ")
-            endereco = input("Novo endereço (enter para manter): ")
-            telefone = input("Novo telefone (enter para manter): ")
-            cliente_controller.alterar_cliente(id_cliente, nome=nome, endereco=endereco, telefone=telefone)
-            print("Alteração realizada.")
+            alterar_cliente()
         elif opcao == "4":
-            id_cliente = int(input("ID do cliente: "))
-            if cliente_controller.excluir_cliente(id_cliente):
-                print("Cliente excluído.")
-            else:
-                print("Cliente não encontrado.")
-        elif opcao == "5":
+            excluir_cliente()
+        elif opcao == "0":
             break
+        else:
+            print("Opção inválida.")
+
+def cadastrar_cliente():
+    nome = input("Nome: ")
+    endereco = input("Endereço: ")
+    contato = input("Contato: ")
+    cpf = input("CPF: ")
+    cliente = Cliente(nome=nome, endereco=endereco, contato=contato, cpf=cpf)
+    cliente.salvar()
+    print(f"Cliente cadastrado com sucesso! ID: {cliente.id_cliente}")
+
+def consultar_cliente():
+    id_cliente = int(input("ID do Cliente: "))
+    cliente = Cliente.consultar(id_cliente)
+    if cliente:
+        print(f"ID: {cliente.id_cliente}, Nome: {cliente.nome}, Endereço: {cliente.endereco}, Contato: {cliente.contato}, CPF: {cliente.cpf}")
+    else:
+        print("Cliente não encontrado.")
+
+def alterar_cliente():
+    id_cliente = int(input("ID do Cliente a alterar: "))
+    cliente = Cliente.consultar(id_cliente)
+    if not cliente:
+        print("Cliente não encontrado.")
+        return
+    nome = input(f"Nome [{cliente.nome}]: ") or cliente.nome
+    endereco = input(f"Endereço [{cliente.endereco}]: ") or cliente.endereco
+    contato = input(f"Contato [{cliente.contato}]: ") or cliente.contato
+    cpf = input(f"CPF [{cliente.cpf}]: ") or cliente.cpf
+    cliente.nome = nome
+    cliente.endereco = endereco
+    cliente.contato = contato
+    cliente.cpf = cpf
+    cliente.salvar()
+    print("Cliente alterado com sucesso!")
+
+def excluir_cliente():
+    id_cliente = int(input("ID do Cliente a excluir: "))
+    Cliente.excluir(id_cliente)
+    print("Cliente excluído com sucesso!")
 
