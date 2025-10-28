@@ -1,19 +1,19 @@
-from models.cliente import Cliente
-from models.funcionario import Funcionario
-from models.equipamento import Equipamento
-from models.ordem_servico import OrdemServico
-from models.visita_tecnica import VisitaTecnica
-from models.conta import Conta
+from views.cliente_view import menu_clientes
+from views.funcionario_view import menu_funcionarios
+from views.equipamento_view import menu_equipamentos
+from views.ordem_servico_view import menu_ordens_servico
+from views.visita_tecnica_view import menu_visitas_tecnicas
+from views.conta_view import menu_contas
 
-def menu_principal():
+def main():
     while True:
-        print("\n--- Sistema de Assistência Técnica ---")
-        print("1. Clientes")
-        print("2. Funcionários")
-        print("3. Equipamentos")
-        print("4. Ordens de Serviço")
-        print("5. Visitas Técnicas")
-        print("6. Contas")
+        print("\n=== Sistema de Assistência Técnica ===")
+        print("1. Gerenciar Clientes")
+        print("2. Gerenciar Funcionários")
+        print("3. Gerenciar Equipamentos")
+        print("4. Gerenciar Ordens de Serviço")
+        print("5. Gerenciar Visitas Técnicas")
+        print("6. Gerenciar Contas")
         print("0. Sair")
         opcao = input("Escolha uma opção: ")
 
@@ -24,15 +24,16 @@ def menu_principal():
         elif opcao == "3":
             menu_equipamentos()
         elif opcao == "4":
-            menu_ordens()
+            menu_ordens_servico()
         elif opcao == "5":
             menu_visitas_tecnicas()
         elif opcao == "6":
             menu_contas()
         elif opcao == "0":
+            print("Saindo do sistema...")
             break
         else:
-            print("Opção inválida.")
+            print("Opção inválida. Tente novamente.")
 
 if __name__ == "__main__":
-    menu_principal()
+    main()
