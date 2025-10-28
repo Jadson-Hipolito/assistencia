@@ -1,28 +1,45 @@
-import json
-from pathlib import Path
+import sqlite3
 
 class Cliente:
-    def __init__(self, id_cliente, nome, endereco, contato, cpf, historico_servicos=None):
+    def __init__(self, id_cliente=None, nome=None, endereco=None, contato=None, cpf=None):
         self.id_cliente = id_cliente
         self.nome = nome
         self.endereco = endereco
         self.contato = contato
         self.cpf = cpf
-        self.historico_servicos = historico_servicos or []
 
-    def adicionar_ordem_servico(self, ordem_servico):
-        self.historico_servicos.append(ordem_servico)
+    def salvar(self):
+        conn = sqlite3.connect("data/assistencia_tecnica.db")
+        cursor = conn.cursor()
+        if self.id_cliente is None:
+            cursor.execute(
+                "INSERT INTO cliente (nome, endereco, contato, cpf) VALUES (?, ?, ?, ?)",
+                (self.nome, self.endereco, self.contato, self.cpf)
+            )
+            self.id_cliente = cursor.lastrowid
+        else:
+            cursor.execute(
+                "UPDATE cliente SET nome=?, endereco=?, contato=?, cpf=? WHERE id_cliente=?",
+                (self.nome, self.endereco, self.contato, self.cpf, self.id_cliente)
+            )
+        conn.commit()
+        conn.close()
 
-    def to_dict(self):
-        return {
-            "id_cliente": self.id_cliente,
-            "nome": self.nome,
-            "endereco": self.endereco,
-            "contato": self.contato,
-            "cpf": self.cpf,
-            "historico_servicos": self.historico_servicos,
-        }
+    @staticmethod
+    def consultar(id_cliente):
+        conn = sqlite3.connect("data/assistencia_tecnica.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_cliente, nome, endereco, contato, cpf FROM cliente WHERE id_cliente=?", (id_cliente,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            return Cliente(*row)
+        return None
 
-    def __repr__(self):
-        return f"Cliente(id_cliente={self.id_cliente}, nome={self.nome})"
-
+    @staticmethod
+    def excluir(id_cliente):
+        conn = sqlite3.connect("data/assistencia_tecnica.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM cliente WHERE id_cliente=?", (id_cliente,))
+        conn.commit()
+        conn.close()
