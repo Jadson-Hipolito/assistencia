@@ -1,4 +1,4 @@
-from views.cliente_view import menu_clientes
+from views.cliente_view import menu_cliente
 from views.funcionario_view import menu_funcionarios
 from views.equipamento_view import menu_equipamentos
 from views.ordem_servico_view import menu_ordens_servico
@@ -18,7 +18,7 @@ def main():
         opcao = input("Escolha uma opção: ")
 
         if opcao == "1":
-            menu_clientes()
+            menu_cliente()
         elif opcao == "2":
             menu_funcionarios()
         elif opcao == "3":

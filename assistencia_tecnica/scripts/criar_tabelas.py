@@ -102,3 +102,4 @@ conn.commit()
 conn.close()
 
 print("Tabelas criadas com sucesso!")
+
