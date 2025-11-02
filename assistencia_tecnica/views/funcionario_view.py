@@ -1,146 +1,75 @@
-from models.funcionario import Funcionario
-from validadores import (
-    validar_nome,
-    validar_endereco,
-    validar_contato,
-    validar_horario,
-    validar_salario,
-    validar_cnpj,
-    validar_id_funcionario
-)
-def menu_funcionarios():
-    while True:
-        print("\n--- Menu Funcionários ---")
-        print("1. Cadastrar Funcionário")
-        print("2. Consultar Funcionário")
-        print("3. Alterar Funcionário")
-        print("4. Excluir Funcionário")
-        print("0. Voltar")
-        opcao = input("Escolha uma opção: ")
+from assistencia_tecnica.models.funcionario import Funcionario
+from assistencia_tecnica.validadores import validar_nome, validar_endereco, validar_contato, validar_horario, validar_salario, validar_cnpj
 
-        if opcao == "1":
-            cadastrar_funcionario()
-        elif opcao == "2":
-            consultar_funcionario()
-        elif opcao == "3":
-            alterar_funcionario()
-        elif opcao == "4":
-            excluir_funcionario()
-        elif opcao == "0":
-            break
-        else:
-            print("Opção inválida.")
 
-def cadastrar_funcionario():
-    nome = input("Nome: ")
+def listar_funcionarios():
+    return [f.to_dict() for f in Funcionario.listar_todos()]
+
+def obter_funcionario(id_funcionario: int):
+    funcionario = Funcionario.consultar(id_funcionario)
+    return funcionario.to_dict() if funcionario else None
+
+def criar_funcionario(data: dict):
+    nome = data.get("nome")
+    endereco = data.get("endereco")
+    contato = data.get("contato")
+    horario = data.get("horario")
+    salario = data.get("salario")
+    cnpj = data.get("cnpj")
+    ativo = data.get("ativo", True)
+
+    # Validações
     if not validar_nome(nome):
-        print("Nome inválido.")
-        return
-
-    endereco = input("Endereço: ")
+        raise ValueError("Nome inválido")
     if not validar_endereco(endereco):
-        print("Endereço inválido.")
-        return
-
-    contato = input("Contato: ")
+        raise ValueError("Endereço inválido")
     if not validar_contato(contato):
-        print("Contato inválido.")
-        return
-
-    horario = input("Horário (ex: 08:00 - 17:00): ")
+        raise ValueError("Contato inválido")
     if not validar_horario(horario):
-        print("Horário inválido.")
-        return
-
-    try:
-        salario = float(input("Salário: "))
-        if not validar_salario(salario):
-            print("Salário inválido.")
-            return
-    except ValueError:
-        print("Salário deve ser numérico.")
-        return
-
-    cnpj = input("CNPJ: ")
+        raise ValueError("Horário inválido. Use formato HH:MM - HH:MM")
+    if not validar_salario(salario):
+        raise ValueError("Salário inválido")
     if not validar_cnpj(cnpj):
-        print("CNPJ inválido.")
-        return
+        raise ValueError("CNPJ inválido")
 
     funcionario = Funcionario(
-        nome=nome, endereco=endereco, contato=contato,
-        horario=horario, salario=salario, cnpj=cnpj
+        nome=nome,
+        endereco=endereco,
+        contato=contato,
+        horario=horario,
+        salario=salario,
+        cnpj=cnpj,
+        ativo=ativo
     )
     funcionario.salvar()
-    print(f"Funcionário cadastrado com sucesso! ID: {funcionario.id_funcionario}")
+    return funcionario.to_dict()
 
-def consultar_funcionario():
-    try:
-        id_funcionario = int(input("ID do Funcionário: "))
-        if not validar_id_funcionario(id_funcionario):
-            print("ID inválido.")
-            return
-    except ValueError:
-        print("ID deve ser um número inteiro.")
-        return
-
-    funcionario = Funcionario.consultar(id_funcionario)
-    if funcionario:
-        print(f"ID: {funcionario.id_funcionario}, Nome: {funcionario.nome}, Endereço: {funcionario.endereco}, Contato: {funcionario.contato}, Horário: {funcionario.horario}, Salário: {funcionario.salario}, CNPJ: {funcionario.cnpj}, Ativo: {funcionario.ativo}")
-    else:
-        print("Funcionário não encontrado.")
-
-def alterar_funcionario():
-    try:
-        id_funcionario = int(input("ID do Funcionário a alterar: "))
-        if not validar_id_funcionario(id_funcionario):
-            print("ID inválido.")
-            return
-    except ValueError:
-        print("ID deve ser um número inteiro.")
-        return
-
+def atualizar_funcionario(id_funcionario: int, data: dict):
     funcionario = Funcionario.consultar(id_funcionario)
     if not funcionario:
-        print("Funcionário não encontrado.")
-        return
+        return None
 
-    nome = input(f"Nome [{funcionario.nome}]: ") or funcionario.nome
+    nome = data.get("nome", funcionario.nome)
+    endereco = data.get("endereco", funcionario.endereco)
+    contato = data.get("contato", funcionario.contato)
+    horario = data.get("horario", funcionario.horario)
+    salario = data.get("salario", funcionario.salario)
+    cnpj = data.get("cnpj", funcionario.cnpj)
+    ativo = data.get("ativo", funcionario.ativo)
+
+    # Validações
     if not validar_nome(nome):
-        print("Nome inválido.")
-        return
-
-    endereco = input(f"Endereço [{funcionario.endereco}]: ") or funcionario.endereco
+        raise ValueError("Nome inválido")
     if not validar_endereco(endereco):
-        print("Endereço inválido.")
-        return
-
-    contato = input(f"Contato [{funcionario.contato}]: ") or funcionario.contato
+        raise ValueError("Endereço inválido")
     if not validar_contato(contato):
-        print("Contato inválido.")
-        return
-
-    horario = input(f"Horário [{funcionario.horario}]: ") or funcionario.horario
+        raise ValueError("Contato inválido")
     if not validar_horario(horario):
-        print("Horário inválido.")
-        return
-
-    salario_input = input(f"Salário [{funcionario.salario}]: ")
-    try:
-        salario = float(salario_input) if salario_input else funcionario.salario
-        if not validar_salario(salario):
-            print("Salário inválido.")
-            return
-    except ValueError:
-        print("Salário deve ser numérico.")
-        return
-
-    cnpj = input(f"CNPJ [{funcionario.cnpj}]: ") or funcionario.cnpj
+        raise ValueError("Horário inválido. Use formato HH:MM - HH:MM")
+    if not validar_salario(salario):
+        raise ValueError("Salário inválido")
     if not validar_cnpj(cnpj):
-        print("CNPJ inválido.")
-        return
-
-    ativo_input = input(f"Ativo [{funcionario.ativo}]: ")
-    funcionario.ativo = bool(int(ativo_input)) if ativo_input else funcionario.ativo
+        raise ValueError("CNPJ inválido")
 
     funcionario.nome = nome
     funcionario.endereco = endereco
@@ -148,19 +77,13 @@ def alterar_funcionario():
     funcionario.horario = horario
     funcionario.salario = salario
     funcionario.cnpj = cnpj
-
+    funcionario.ativo = ativo
     funcionario.salvar()
-    print("Funcionário alterado com sucesso!")
+    return funcionario.to_dict()
 
-def excluir_funcionario():
-    try:
-        id_funcionario = int(input("ID do Funcionário a excluir: "))
-        if not validar_id_funcionario(id_funcionario):
-            print("ID inválido.")
-            return
-    except ValueError:
-        print("ID deve ser um número inteiro.")
-        return
-
+def deletar_funcionario(id_funcionario: int):
+    funcionario = Funcionario.consultar(id_funcionario)
+    if not funcionario:
+        return None
     Funcionario.excluir(id_funcionario)
-    print("Funcionário excluído com sucesso!")
+    return {"mensagem": "Funcionário excluído com sucesso"}

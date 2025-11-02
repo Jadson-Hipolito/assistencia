@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Contas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Contas</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaContaModal">Nova Conta</button>
+</div>
+
+<table class="table table-striped" id="contasTable">
+  <thead>
+    <tr>
+      <th>ID</th><th>Ordem</th><th>Valor</th><th>Status</th><th>Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="novaContaModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="novaContaForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Nova Conta</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input class="form-control mb-2" name="ordem_id" placeholder="ID Ordem" required>
+        <input class="form-control mb-2" name="valor" placeholder="Valor

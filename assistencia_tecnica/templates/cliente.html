@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Clientes{% endblock %}
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Clientes</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoClienteModal">Novo cliente</button>
+  </div>
+
+  <table class="table table-striped" id="clientesTable">
+    <thead>
+      <tr>
+        <th>ID</th><th>Nome</th><th>Endereço</th><th>Contato</th><th>CPF</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <!-- Modal novo cliente -->
+  <div class="modal fade" id="novoClienteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="novoClienteForm">
+        <div class="modal-header">
+          <h5 class="modal-title">Novo Cliente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Nome</label>
+            <input class="form-control" name="nome" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Endereço</label>
+            <input class="form-control" name="endereco" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Contato</label>
+            <input class="form-control" name="contato" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label">CPF</label>
+            <input class="form-control" name="cpf" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" type="submit">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const API = "http://127.0.0.1:8000";
+
+    async function carregarClientes() {
+      const res = await fetch(`${API}/clientes/`);
+      const data = await res.json();
+      const tbody = document.querySelector("#clientesTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(c => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${c.id ?? ""}</td>
+          <td>${c.nome}</td>
+          <td>${c.endereco}</td>
+          <td>${c.contato}</td>
+          <td>${c.cpf}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="deletarCliente(${c.id})">Excluir</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function criarCliente(payload) {
+      const res = await fetch(`${API}/clientes/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        alert("Erro ao criar cliente: " + err);
+        return;
+      }
+      await carregarClientes();
+    }
+
+    async function deletarCliente(id) {
+      if (!confirm("Confirmar exclusão?")) return;
+      const res = await fetch(`${API}/clientes/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.text();
+        alert("Erro ao excluir: " + err);
+        return;
+      }
+      await carregarClientes();
+    }
+
+    document.getElementById("novoClienteForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const payload = {
+        nome: form.nome.value,
+        endereco: form.endereco.value,
+        contato: form.contato.value,
+        cpf: form.cpf.value
+      };
+      await criarCliente(payload);
+      form.reset();
+      const modal = bootstrap.Modal.getInstance(document.getElementById("novoClienteModal"));
+      modal.hide();
+    });
+
+    carregarClientes();
+  </script>
+{% endblock %}

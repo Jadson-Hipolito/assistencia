@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Ordens de Serviço{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Ordens de Serviço</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaOrdemModal">Nova Ordem</button>
+</div>
+
+<table class="table table-striped" id="ordensTable">
+  <thead>
+    <tr>
+      <th>ID</th><th>Cliente</th><th>Equipamento</th><th>Descrição</th><th>Status</th><th>Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="novaOrdemModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="novaOrdemForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Nova Ordem de Serviço</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input class="form-control mb-2" name="cliente_id" placeholder="ID Cliente" required>
+        <input class="form-control mb-2" name="equipamento_id" placeholder="ID Equipamento" required>
+        <textarea class="form-control mb-2" name="descricao" placeholder="Descrição do problema" required></textarea>
+        <select class="form-control mb-2" name="status">
+          <option value="aberta">Aberta</option>
+          <option value="em andamento">Em andamento</option>
+          <option value="concluída">Concluída</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function carregarOrdens() {
+  const res = await fetch(`${API}/ordens_servico/`);
+  const data = await res.json();
+  const tbody = document.querySelector("#ordensTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(o => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${o.id ?? ""}</td>
+      <td>${o.cliente_id}</td>
+      <td>${o.equipamento_id}</td>
+      <td>${o.descricao}</td>
+      <td>${o.status}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id})">Excluir</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function criarOrdem(payload) {
+  await fetch(`${API}/ordens_servico/`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  await carregarOrdens();
+}
+
+async function deletarOrdem(id) {
+  await fetch(`${API}/ordens_servico/${id}`, { method: "DELETE" });
+  await carregarOrdens();
+}
+
+document.getElementById("novaOrdemForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  await criarOrdem({
+    cliente_id: parseInt(form.cliente_id.value),
+    equipamento_id: parseInt(form.equipamento_id.value),
+    descricao: form.descricao.value,
+    status: form.status.value
+  });
+  form.reset();
+  bootstrap.Modal.getInstance(document.getElementById("novaOrdemModal")).hide();
+});
+
+carregarOrdens();
+</script>
+{% endblock %}

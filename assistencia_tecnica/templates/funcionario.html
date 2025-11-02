@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Funcionários{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Funcionários</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoFuncionarioModal">Novo Funcionário</button>
+</div>
+
+<table class="table table-striped" id="funcionariosTable">
+  <thead>
+    <tr>
+      <th>ID</th><th>Nome</th><th>Cargo</th><th>Salário</th><th>CPF</th><th>Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="novoFuncionarioModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="novoFuncionarioForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Novo Funcionário</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input class="form-control mb-2" name="nome" placeholder="Nome" required>
+        <input class="form-control mb-2" name="cargo" placeholder="Cargo" required>
+        <input class="form-control mb-2" name="salario" placeholder="Salário" type="number" required>
+        <input class="form-control mb-2" name="cpf" placeholder="CPF" required>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function carregarFuncionarios() {
+  const res = await fetch(`${API}/funcionarios/`);
+  const data = await res.json();
+  const tbody = document.querySelector("#funcionariosTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(f => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${f.id ?? ""}</td>
+      <td>${f.nome}</td>
+      <td>${f.cargo}</td>
+      <td>${f.salario}</td>
+      <td>${f.cpf}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarFuncionario(${f.id})">Excluir</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function criarFuncionario(payload) {
+  await fetch(`${API}/funcionarios/`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  await carregarFuncionarios();
+}
+
+async function deletarFuncionario(id) {
+  await fetch(`${API}/funcionarios/${id}`, { method: "DELETE" });
+  await carregarFuncionarios();
+}
+
+document.getElementById("novoFuncionarioForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  await criarFuncionario({
+    nome: form.nome.value,
+    cargo: form.cargo.value,
+    salario: parseFloat(form.salario.value),
+    cpf: form.cpf.value
+  });
+  form.reset();
+  bootstrap.Modal.getInstance(document.getElementById("novoFuncionarioModal")).hide();
+});
+
+carregarFuncionarios();
+</script>
+{% endblock %}

@@ -1,53 +1,34 @@
-from models.conta import Conta
+from assistencia_tecnica.models.conta import Conta
 
-def menu_contas():
-    while True:
-        print("\n--- Menu Contas ---")
-        print("1. Registrar Conta Receber")
-        print("2. Pagar Conta")
-        print("3. Consultar Conta")
-        print("0. Voltar")
-        opcao = input("Escolha uma opção: ")
+def listar_contas():
+    return [c.to_dict() for c in Conta.listar_todos()]
 
-        if opcao == "1":
-            registrar_conta()
-        elif opcao == "2":
-            pagar_conta()
-        elif opcao == "3":
-            consultar_conta()
-        elif opcao == "0":
-            break
-        else:
-            print("Opção inválida.")
+def listar_pendentes():
+    return [c.to_dict() for c in Conta.listar_pendentes()]
 
-def registrar_conta():
-    id_os = int(input("ID da Ordem de Serviço: "))
-    valor = float(input("Valor da Conta: "))
-    conta = Conta(id_os=id_os, valor=valor, tipo='Receber')
+def obter_conta(id_conta: int):
+    conta = Conta.consultar(id_conta)
+    return conta.to_dict() if conta else None
+
+def criar_conta(data: dict):
+    conta = Conta(
+        id_os=data.get("id_os"),
+        valor=data.get("valor"),
+        tipo=data.get("tipo", "Receber")
+    )
     conta.salvar()
-    print(f"Conta registrada com sucesso! ID: {conta.id_conta}")
+    return conta.to_dict()
 
-def pagar_conta():
-    contas = Conta.listar_pendentes()
-    if not contas:
-        print("Não há contas pendentes.")
-        return
-    print("Contas Pendentes:")
-    for c in contas:
-        print(f"ID: {c.id_conta}, Valor: {c.valor}, ID OS: {c.id_os}")
-    id_conta = int(input("ID da Conta a pagar: "))
+def pagar_conta(id_conta: int):
     conta = Conta.consultar(id_conta)
-    if conta:
-        conta.pagar()
-        print("Conta paga com sucesso!")
-    else:
-        print("Conta não encontrada.")
+    if not conta:
+        return None
+    conta.pagar()
+    return conta.to_dict()
 
-def consultar_conta():
-    id_conta = int(input("ID da Conta: "))
+def deletar_conta(id_conta: int):
     conta = Conta.consultar(id_conta)
-    if conta:
-        print(f"ID Conta: {conta.id_conta}, Valor: {conta.valor}, Status: {conta.status}, Tipo: {conta.tipo}, ID OS: {conta.id_os}")
-    else:
-        print("Conta não encontrada.")
-
+    if not conta:
+        return None
+    Conta.excluir(id_conta)
+    return {"mensagem": "Conta excluída com sucesso"}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Visitas Técnicas{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Visitas Técnicas</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaVisitaModal">Nova Visita</button>
+</div>
+
+<table class="table table-striped" id="visitasTable">
+  <thead>
+    <tr>
+      <th>ID</th><th>Ordem</th><th>Funcionário</th><th>Data</th><th>Observações</th><th>Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="novaVisitaModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="novaVisitaForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Nova Visita Técnica</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input class="form-control mb-2" name="ordem_id" placeholder="ID Ordem" required>
+        <input class="form-control mb-2" name="funcionario_id" placeholder="ID Funcionário" required>
+        <input class="form-control mb-2" type="date" name="data" required>
+        <textarea class="form-control mb-2" name="observacoes" placeholder="Observações"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function carregarVisitas() {
+  const res = await fetch(`${API}/visitas_tecnicas/`);
+  const data = await res.json();
+  const tbody = document.querySelector("#visitasTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(v => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${v.id ?? ""}</td>
+      <td>${v.ordem_id}</td>
+      <td>${v.funcionario_id}</td>
+      <td>${v.data}</td>
+      <td>${v.observacoes ?? ""}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarVisita(${v.id})">Excluir</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function criarVisita(payload) {
+  await fetch(`${API}/visitas_tecnicas/`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  await carregarVisitas();
+}
+
+async function deletarVisita(id) {
+  await fetch(`${API}/visitas_tecnicas/${id}`, { method: "DELETE" });
+  await carregarVisitas();
+}
+
+document.getElementById("novaVisitaForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  await criarVisita({
+    ordem_id: parseInt(form.ordem_id.value),
+    funcionario_id: parseInt(form.funcionario_id.value),
+    data: form.data.value,
+    observacoes: form.observacoes.value
+  });
+  form.reset();
+  bootstrap.Modal.getInstance(document.getElementById("novaVisitaModal")).hide();
+});
+
+carregarVisitas();
+</script>
+{% endblock %}

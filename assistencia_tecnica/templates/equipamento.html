@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Equipamentos{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Equipamentos</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoEquipamentoModal">Novo Equipamento</button>
+</div>
+
+<table class="table table-striped" id="equipamentosTable">
+  <thead>
+    <tr>
+      <th>ID</th><th>Nome</th><th>Modelo</th><th>Número de Série</th><th>Ações</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="novoEquipamentoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="novoEquipamentoForm">
+      <div class="modal-header">
+        <h5 class="modal-title">Novo Equipamento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input class="form-control mb-2" name="nome" placeholder="Nome" required>
+        <input class="form-control mb-2" name="modelo" placeholder="Modelo" required>
+        <input class="form-control mb-2" name="numero_serie" placeholder="Número de Série" required>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const API = "http://127.0.0.1:8000";
+
+async function carregarEquipamentos() {
+  const res = await fetch(`${API}/equipamentos/`);
+  const data = await res.json();
+  const tbody = document.querySelector("#equipamentosTable tbody");
+  tbody.innerHTML = "";
+  data.forEach(eq => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${eq.id ?? ""}</td>
+      <td>${eq.nome}</td>
+      <td>${eq.modelo}</td>
+      <td>${eq.numero_serie}</td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarEquipamento(${eq.id})">Excluir</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function criarEquipamento(payload) {
+  await fetch(`${API}/equipamentos/`, {
+    method: "POST", headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  await carregarEquipamentos();
+}
+
+async function deletarEquipamento(id) {
+  await fetch(`${API}/equipamentos/${id}`, { method: "DELETE" });
+  await carregarEquipamentos();
+}
+
+document.getElementById("novoEquipamentoForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  await criarEquipamento({
+    nome: form.nome.value,
+    modelo: form.modelo.value,
+    numero_serie: form.numero_serie.value
+  });
+  form.reset();
+  bootstrap.Modal.getInstance(document.getElementById("novoEquipamentoModal")).hide();
+});
+
+carregarEquipamentos();
+</script>
+{% endblock %}

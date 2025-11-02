@@ -1,63 +1,38 @@
-from models.equipamento import Equipamento
+from assistencia_tecnica.models.equipamento import Equipamento
 
-def menu_equipamentos():
-    while True:
-        print("\n--- Menu Equipamentos ---")
-        print("1. Cadastrar Equipamento")
-        print("2. Consultar Equipamento")
-        print("3. Alterar Equipamento")
-        print("4. Excluir Equipamento")
-        print("0. Voltar")
-        opcao = input("Escolha uma opção: ")
+def listar_equipamentos():
+    return [e.to_dict() for e in Equipamento.listar_todos()]
 
-        if opcao == "1":
-            cadastrar_equipamento()
-        elif opcao == "2":
-            consultar_equipamento()
-        elif opcao == "3":
-            alterar_equipamento()
-        elif opcao == "4":
-            excluir_equipamento()
-        elif opcao == "0":
-            break
-        else:
-            print("Opção inválida.")
-
-def cadastrar_equipamento():
-    tipo = input("Tipo: ")
-    marca = input("Marca: ")
-    modelo = input("Modelo: ")
-    numero_serie = input("Número de Série: ")
-    id_cliente = int(input("ID do Cliente: "))
-    equipamento = Equipamento(tipo=tipo, marca=marca, modelo=modelo, numero_serie=numero_serie, id_cliente=id_cliente)
-    equipamento.salvar()
-    print(f"Equipamento cadastrado com sucesso! ID: {equipamento.id_equipamento}")
-
-def consultar_equipamento():
-    id_equipamento = int(input("ID do Equipamento: "))
+def obter_equipamento(id_equipamento: int):
     equipamento = Equipamento.consultar(id_equipamento)
-    if equipamento:
-        print(f"ID: {equipamento.id_equipamento}, Tipo: {equipamento.tipo}, Marca: {equipamento.marca}, Modelo: {equipamento.modelo}, Número Série: {equipamento.numero_serie}, ID Cliente: {equipamento.id_cliente}")
-    else:
-        print("Equipamento não encontrado.")
+    return equipamento.to_dict() if equipamento else None
 
-def alterar_equipamento():
-    id_equipamento = int(input("ID do Equipamento a alterar: "))
+def criar_equipamento(data: dict):
+    equipamento = Equipamento(
+        tipo=data.get("tipo"),
+        marca=data.get("marca"),
+        modelo=data.get("modelo"),
+        numero_serie=data.get("numero_serie"),
+        id_cliente=data.get("id_cliente")
+    )
+    equipamento.salvar()
+    return equipamento.to_dict()
+
+def atualizar_equipamento(id_equipamento: int, data: dict):
     equipamento = Equipamento.consultar(id_equipamento)
     if not equipamento:
-        print("Equipamento não encontrado.")
-        return
-    equipamento.tipo = input(f"Tipo [{equipamento.tipo}]: ") or equipamento.tipo
-    equipamento.marca = input(f"Marca [{equipamento.marca}]: ") or equipamento.marca
-    equipamento.modelo = input(f"Modelo [{equipamento.modelo}]: ") or equipamento.modelo
-    equipamento.numero_serie = input(f"Número Série [{equipamento.numero_serie}]: ") or equipamento.numero_serie
-    cliente_input = input(f"ID Cliente [{equipamento.id_cliente}]: ") or equipamento.id_cliente
-    equipamento.id_cliente = int(cliente_input)
+        return None
+    equipamento.tipo = data.get("tipo", equipamento.tipo)
+    equipamento.marca = data.get("marca", equipamento.marca)
+    equipamento.modelo = data.get("modelo", equipamento.modelo)
+    equipamento.numero_serie = data.get("numero_serie", equipamento.numero_serie)
+    equipamento.id_cliente = data.get("id_cliente", equipamento.id_cliente)
     equipamento.salvar()
-    print("Equipamento alterado com sucesso!")
+    return equipamento.to_dict()
 
-def excluir_equipamento():
-    id_equipamento = int(input("ID do Equipamento a excluir: "))
+def deletar_equipamento(id_equipamento: int):
+    equipamento = Equipamento.consultar(id_equipamento)
+    if not equipamento:
+        return None
     Equipamento.excluir(id_equipamento)
-    print("Equipamento excluído com sucesso!")
-
+    return {"mensagem": "Equipamento excluído com sucesso"}

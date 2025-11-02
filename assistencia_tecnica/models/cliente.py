@@ -8,6 +8,15 @@ class Cliente:
         self.contato = contato
         self.cpf = cpf
 
+    def to_dict(self):
+        return {
+            "id": self.id_cliente,
+            "nome": self.nome,
+            "endereco": self.endereco,
+            "contato": self.contato,
+            "cpf": self.cpf
+        }
+
     def salvar(self):
         conn = sqlite3.connect("data/assistencia_tecnica.db")
         cursor = conn.cursor()
@@ -35,6 +44,15 @@ class Cliente:
         if row:
             return Cliente(*row)
         return None
+
+    @staticmethod
+    def listar_todos():
+        conn = sqlite3.connect("data/assistencia_tecnica.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_cliente, nome, endereco, contato, cpf FROM cliente")
+        rows = cursor.fetchall()
+        conn.close()
+        return [Cliente(*row) for row in rows]
 
     @staticmethod
     def excluir(id_cliente):
