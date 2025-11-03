@@ -1,12 +1,13 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from assistencia_tecnica.api.schemas.routers import interface
+from assistencia_tecnica.api.schemas.routers import interface, cliente, funcionario
 
-# Cria a aplicação FastAPI
 app = FastAPI(title="Assistência Técnica")
 
-# Inclui o router de interface (HTML)
+# Inclui os routers
 app.include_router(interface.router)
+app.include_router(cliente.router)
+app.include_router(funcionario.router)
 
-# Monta a pasta de arquivos estáticos (CSS, JS, imagens)
+# Monta a pasta de arquivos estáticos
 app.mount("/static", StaticFiles(directory="assistencia_tecnica/static"), name="static")

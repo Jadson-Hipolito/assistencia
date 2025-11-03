@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from assistencia_tecnica.views import funcionario_view
 
 router = APIRouter(prefix="/funcionarios", tags=["Funcionários"])
@@ -15,11 +15,11 @@ def obter_funcionario(funcionario_id: int):
     return funcionario
 
 @router.post("/")
-def criar_funcionario(funcionario: dict):
+def criar_funcionario(funcionario: dict = Body(...)):
     return funcionario_view.criar_funcionario(funcionario)
 
 @router.put("/{funcionario_id}")
-def atualizar_funcionario(funcionario_id: int, funcionario: dict):
+def atualizar_funcionario(funcionario_id: int, funcionario: dict = Body(...)):
     atualizado = funcionario_view.atualizar_funcionario(funcionario_id, funcionario)
     if not atualizado:
         raise HTTPException(status_code=404, detail="Funcionário não encontrado")

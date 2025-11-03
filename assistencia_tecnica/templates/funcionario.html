@@ -3,13 +3,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>Funcionários</h2>
+  <input type="text" id="buscaFuncionario" class="form-control w-50 me-3" placeholder="Buscar por nome ou CNPJ">
   <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoFuncionarioModal">Novo Funcionário</button>
 </div>
 
 <table class="table table-striped" id="funcionariosTable">
   <thead>
     <tr>
-      <th>ID</th><th>Nome</th><th>Cargo</th><th>Salário</th><th>CPF</th><th>Ações</th>
+      <th>ID</th><th>Nome</th><th>Endereço</th><th>Contato</th><th>Horário</th><th>Salário</th><th>CNPJ</th><th>Ações</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -25,9 +26,11 @@
       </div>
       <div class="modal-body">
         <input class="form-control mb-2" name="nome" placeholder="Nome" required>
-        <input class="form-control mb-2" name="cargo" placeholder="Cargo" required>
+        <input class="form-control mb-2" name="endereco" placeholder="Endereço" required>
+        <input class="form-control mb-2" name="contato" placeholder="Contato" required>
+        <input class="form-control mb-2" name="horario" placeholder="Horário (ex: 08:00 - 17:00)" required>
         <input class="form-control mb-2" name="salario" placeholder="Salário" type="number" required>
-        <input class="form-control mb-2" name="cpf" placeholder="CPF" required>
+        <input class="form-control mb-2" name="cnpj" placeholder="CNPJ" required>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -39,49 +42,113 @@
 
 <script>
 const API = "http://127.0.0.1:8000";
+let funcionarios = [];
+let funcionarioEditandoId = null;
 
 async function carregarFuncionarios() {
   const res = await fetch(`${API}/funcionarios/`);
-  const data = await res.json();
+  funcionarios = await res.json();
+  renderizarTabela(funcionarios);
+}
+
+function renderizarTabela(lista) {
   const tbody = document.querySelector("#funcionariosTable tbody");
   tbody.innerHTML = "";
-  data.forEach(f => {
+  lista.forEach(f => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${f.id ?? ""}</td>
       <td>${f.nome}</td>
-      <td>${f.cargo}</td>
+      <td>${f.endereco}</td>
+      <td>${f.contato}</td>
+      <td>${f.horario}</td>
       <td>${f.salario}</td>
-      <td>${f.cpf}</td>
-      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarFuncionario(${f.id})">Excluir</button></td>`;
+      <td>${f.cnpj}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirEdicao(${f.id})">Editar</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmarExclusao(${f.id})">Excluir</button>
+      </td>`;
     tbody.appendChild(tr);
   });
 }
 
-async function criarFuncionario(payload) {
-  await fetch(`${API}/funcionarios/`, {
-    method: "POST", headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(payload)
-  });
-  await carregarFuncionarios();
+function abrirEdicao(id) {
+  const f = funcionarios.find(f => f.id === id);
+  if (!f) return;
+  funcionarioEditandoId = id;
+  const form = document.getElementById("novoFuncionarioForm");
+  form.nome.value = f.nome;
+  form.endereco.value = f.endereco;
+  form.contato.value = f.contato;
+  form.horario.value = f.horario;
+  form.salario.value = f.salario;
+  form.cnpj.value = f.cnpj;
+  document.querySelector("#novoFuncionarioModal .modal-title").textContent = "Editar Funcionário";
+  new bootstrap.Modal(document.getElementById("novoFuncionarioModal")).show();
+}
+
+function confirmarExclusao(id) {
+  if (confirm("Deseja realmente excluir este funcionário?")) {
+    deletarFuncionario(id);
+  }
 }
 
 async function deletarFuncionario(id) {
-  await fetch(`${API}/funcionarios/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API}/funcionarios/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    const err = await res.json();
+    alert("Erro: " + err.detail);
+    return;
+  }
   await carregarFuncionarios();
 }
 
 document.getElementById("novoFuncionarioForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
-  await criarFuncionario({
+  const payload = {
     nome: form.nome.value,
-    cargo: form.cargo.value,
+    endereco: form.endereco.value,
+    contato: form.contato.value,
+    horario: form.horario.value,
     salario: parseFloat(form.salario.value),
-    cpf: form.cpf.value
+    cnpj: form.cnpj.value,
+    ativo: true
+  };
+
+  let url = `${API}/funcionarios/`;
+  let method = "POST";
+
+  if (funcionarioEditandoId) {
+    url += funcionarioEditandoId;
+    method = "PUT";
+  }
+
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
   });
+
+  if (!res.ok) {
+    const err = await res.json();
+    alert("Erro: " + err.detail);
+    return;
+  }
+
+  funcionarioEditandoId = null;
   form.reset();
+  document.querySelector("#novoFuncionarioModal .modal-title").textContent = "Novo Funcionário";
   bootstrap.Modal.getInstance(document.getElementById("novoFuncionarioModal")).hide();
+  await carregarFuncionarios();
+});
+
+document.getElementById("buscaFuncionario").addEventListener("input", () => {
+  const termo = document.getElementById("buscaFuncionario").value.toLowerCase();
+  const filtrados = funcionarios.filter(f =>
+    f.nome.toLowerCase().includes(termo) || f.cnpj.toLowerCase().includes(termo)
+  );
+  renderizarTabela(filtrados);
 });
 
 carregarFuncionarios();

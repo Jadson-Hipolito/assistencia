@@ -3,6 +3,7 @@
 {% block content %}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Clientes</h2>
+    <input type="text" id="buscaCliente" class="form-control w-50 me-3" placeholder="Buscar por nome ou CPF">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoClienteModal">Novo cliente</button>
   </div>
 
@@ -15,12 +16,12 @@
     <tbody></tbody>
   </table>
 
-  <!-- Modal novo cliente -->
+  <!-- Modal novo/editar cliente -->
   <div class="modal fade" id="novoClienteModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
       <form class="modal-content" id="novoClienteForm">
         <div class="modal-header">
-          <h5 class="modal-title">Novo Cliente</h5>
+          <h5 class="modal-title">Cliente</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -51,13 +52,19 @@
 
   <script>
     const API = "http://127.0.0.1:8000";
+    let clienteEditandoId = null;
+    let clientes = [];
 
     async function carregarClientes() {
       const res = await fetch(`${API}/clientes/`);
-      const data = await res.json();
+      clientes = await res.json();
+      renderizarTabela(clientes);
+    }
+
+    function renderizarTabela(lista) {
       const tbody = document.querySelector("#clientesTable tbody");
       tbody.innerHTML = "";
-      data.forEach(c => {
+      lista.forEach(c => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${c.id ?? ""}</td>
@@ -66,23 +73,44 @@
           <td>${c.contato}</td>
           <td>${c.cpf}</td>
           <td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="abrirEdicao(${c.id})">Editar</button>
             <button class="btn btn-sm btn-outline-danger" onclick="deletarCliente(${c.id})">Excluir</button>
           </td>`;
         tbody.appendChild(tr);
       });
     }
 
-    async function criarCliente(payload) {
-      const res = await fetch(`${API}/clientes/`, {
-        method: "POST",
+    function abrirEdicao(id) {
+      const cliente = clientes.find(c => c.id === id);
+      if (!cliente) return;
+      clienteEditandoId = id;
+      const form = document.getElementById("novoClienteForm");
+      form.nome.value = cliente.nome;
+      form.endereco.value = cliente.endereco;
+      form.contato.value = cliente.contato;
+      form.cpf.value = cliente.cpf;
+      const modal = new bootstrap.Modal(document.getElementById("novoClienteModal"));
+      modal.show();
+    }
+
+    async function salvarCliente(payload) {
+      let url = `${API}/clientes/`;
+      let method = "POST";
+      if (clienteEditandoId) {
+        url += clienteEditandoId;
+        method = "PUT";
+      }
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       if (!res.ok) {
         const err = await res.text();
-        alert("Erro ao criar cliente: " + err);
+        alert("Erro ao salvar cliente: " + err);
         return;
       }
+      clienteEditandoId = null;
       await carregarClientes();
     }
 
@@ -106,10 +134,18 @@
         contato: form.contato.value,
         cpf: form.cpf.value
       };
-      await criarCliente(payload);
+      await salvarCliente(payload);
       form.reset();
       const modal = bootstrap.Modal.getInstance(document.getElementById("novoClienteModal"));
       modal.hide();
+    });
+
+    document.getElementById("buscaCliente").addEventListener("input", () => {
+      const termo = document.getElementById("buscaCliente").value.toLowerCase();
+      const filtrados = clientes.filter(c =>
+        c.nome.toLowerCase().includes(termo) || c.cpf.toLowerCase().includes(termo)
+      );
+      renderizarTabela(filtrados);
     });
 
     carregarClientes();

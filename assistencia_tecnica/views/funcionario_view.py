@@ -1,6 +1,9 @@
+from fastapi import HTTPException
 from assistencia_tecnica.models.funcionario import Funcionario
-from assistencia_tecnica.validadores import validar_nome, validar_endereco, validar_contato, validar_horario, validar_salario, validar_cnpj
-
+from assistencia_tecnica.validadores import (
+    validar_nome, validar_endereco, validar_contato,
+    validar_horario, validar_salario, validar_cnpj
+)
 
 def listar_funcionarios():
     return [f.to_dict() for f in Funcionario.listar_todos()]
@@ -20,17 +23,17 @@ def criar_funcionario(data: dict):
 
     # Validações
     if not validar_nome(nome):
-        raise ValueError("Nome inválido")
+        raise HTTPException(status_code=400, detail="Nome inválido")
     if not validar_endereco(endereco):
-        raise ValueError("Endereço inválido")
+        raise HTTPException(status_code=400, detail="Endereço inválido")
     if not validar_contato(contato):
-        raise ValueError("Contato inválido")
+        raise HTTPException(status_code=400, detail="Contato inválido")
     if not validar_horario(horario):
-        raise ValueError("Horário inválido. Use formato HH:MM - HH:MM")
+        raise HTTPException(status_code=400, detail="Horário inválido. Use formato HH:MM - HH:MM")
     if not validar_salario(salario):
-        raise ValueError("Salário inválido")
+        raise HTTPException(status_code=400, detail="Salário inválido")
     if not validar_cnpj(cnpj):
-        raise ValueError("CNPJ inválido")
+        raise HTTPException(status_code=400, detail="CNPJ inválido")
 
     funcionario = Funcionario(
         nome=nome,
@@ -59,17 +62,17 @@ def atualizar_funcionario(id_funcionario: int, data: dict):
 
     # Validações
     if not validar_nome(nome):
-        raise ValueError("Nome inválido")
+        raise HTTPException(status_code=400, detail="Nome inválido")
     if not validar_endereco(endereco):
-        raise ValueError("Endereço inválido")
+        raise HTTPException(status_code=400, detail="Endereço inválido")
     if not validar_contato(contato):
-        raise ValueError("Contato inválido")
+        raise HTTPException(status_code=400, detail="Contato inválido")
     if not validar_horario(horario):
-        raise ValueError("Horário inválido. Use formato HH:MM - HH:MM")
+        raise HTTPException(status_code=400, detail="Horário inválido. Use formato HH:MM - HH:MM")
     if not validar_salario(salario):
-        raise ValueError("Salário inválido")
+        raise HTTPException(status_code=400, detail="Salário inválido")
     if not validar_cnpj(cnpj):
-        raise ValueError("CNPJ inválido")
+        raise HTTPException(status_code=400, detail="CNPJ inválido")
 
     funcionario.nome = nome
     funcionario.endereco = endereco
