@@ -17,7 +17,16 @@ def criar_funcionario(data: dict):
     endereco = data.get("endereco")
     contato = data.get("contato")
     horario = data.get("horario")
-    salario = data.get("salario")
+
+    # Tratamento robusto do salário
+    salario_raw = data.get("salario", 0)
+    try:
+        if isinstance(salario_raw, str):
+            salario_raw = salario_raw.replace(",", ".")
+        salario = float(salario_raw)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Salário inválido")
+
     cnpj = data.get("cnpj")
     ativo = data.get("ativo", True)
 
@@ -56,7 +65,16 @@ def atualizar_funcionario(id_funcionario: int, data: dict):
     endereco = data.get("endereco", funcionario.endereco)
     contato = data.get("contato", funcionario.contato)
     horario = data.get("horario", funcionario.horario)
-    salario = data.get("salario", funcionario.salario)
+
+    # Tratamento robusto do salário
+    salario_raw = data.get("salario", funcionario.salario)
+    try:
+        if isinstance(salario_raw, str):
+            salario_raw = salario_raw.replace(",", ".")
+        salario = float(salario_raw)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=400, detail="Salário inválido")
+
     cnpj = data.get("cnpj", funcionario.cnpj)
     ativo = data.get("ativo", funcionario.ativo)
 
