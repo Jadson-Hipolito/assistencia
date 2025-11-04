@@ -1,21 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Equipamentos{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>Equipamentos</h2>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoEquipamentoModal">Novo Equipamento</button>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novoEquipamentoModal">
+    Novo Equipamento
+  </button>
 </div>
 
 <table class="table table-striped" id="equipamentosTable">
   <thead>
     <tr>
-      <th>ID</th><th>Nome</th><th>Modelo</th><th>Número de Série</th><th>Ações</th>
+      <th>ID</th>
+      <th>Tipo / Marca</th>
+      <th>Modelo</th>
+      <th>Número de Série</th>
+      <th>ID Cliente</th>
+      <th>Nome do Cliente</th>
+      <th>Ações</th>
     </tr>
   </thead>
   <tbody></tbody>
 </table>
 
-<!-- Modal -->
+<!-- Modal Novo Equipamento -->
 <div class="modal fade" id="novoEquipamentoModal" tabindex="-1">
   <div class="modal-dialog">
     <form class="modal-content" id="novoEquipamentoForm">
@@ -23,11 +32,19 @@
         <h5 class="modal-title">Novo Equipamento</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
+
       <div class="modal-body">
-        <input class="form-control mb-2" name="nome" placeholder="Nome" required>
+        <input class="form-control mb-2" name="tipo" placeholder="Tipo (ex: Notebook)" required>
+        <input class="form-control mb-2" name="marca" placeholder="Marca (ex: Dell)" required>
         <input class="form-control mb-2" name="modelo" placeholder="Modelo" required>
         <input class="form-control mb-2" name="numero_serie" placeholder="Número de Série" required>
+
+        <!-- Seleção de Cliente -->
+        <select class="form-control mb-2" name="id_cliente" id="clienteSelect" required>
+          <option value="">Selecione um cliente</option>
+        </select>
       </div>
+
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button class="btn btn-primary" type="submit">Salvar</button>
@@ -37,50 +54,142 @@
 </div>
 
 <script>
-const API = "http://127.0.0.1:8000";
+const API = "http://127.0.0.1:8000"; // URL base da API
 
-async function carregarEquipamentos() {
-  const res = await fetch(`${API}/equipamentos/`);
-  const data = await res.json();
-  const tbody = document.querySelector("#equipamentosTable tbody");
-  tbody.innerHTML = "";
-  data.forEach(eq => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${eq.id ?? ""}</td>
-      <td>${eq.nome}</td>
-      <td>${eq.modelo}</td>
-      <td>${eq.numero_serie}</td>
-      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarEquipamento(${eq.id})">Excluir</button></td>`;
-    tbody.appendChild(tr);
-  });
+// Função genérica para mostrar alertas
+function mostrarMensagem(msg, tipo = "success") {
+  const alerta = document.createElement("div");
+  alerta.className = `alert alert-${tipo} position-fixed top-0 end-0 m-3`;
+  alerta.textContent = msg;
+  alerta.style.zIndex = 1055;
+  document.body.appendChild(alerta);
+  setTimeout(() => alerta.remove(), 3000);
 }
 
+// === Carregar Equipamentos ===
+async function carregarEquipamentos() {
+  try {
+    const res = await fetch(`${API}/equipamentos/`);
+    if (!res.ok) throw new Error("Erro ao buscar equipamentos");
+    const data = await res.json();
+
+    const tbody = document.querySelector("#equipamentosTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(eq => {
+      // Suporte a diferentes formatos de resposta:
+      // - eq.cliente: { id, nome }
+      // - eq.nome_cliente / eq.id_cliente (direto no objeto)
+      // - eq.client (ou outros) -> fallback
+      const clienteId = eq.cliente?.id ?? eq.id_cliente ?? "—";
+      const clienteNome = eq.cliente?.nome ?? eq.nome_cliente ?? "—";
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${eq.id_equipamento}</td>
+        <td>${eq.tipo ?? ""} ${eq.marca ?? ""}</td>
+        <td>${eq.modelo ?? ""}</td>
+        <td>${eq.numero_serie ?? ""}</td>
+        <td>${clienteId}</td>
+        <td>${clienteNome}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-danger" onclick="deletarEquipamento(${eq.id_equipamento})">
+            Excluir
+          </button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+    mostrarMensagem(err.message, "danger");
+  }
+}
+
+// === Carregar Clientes ===
+async function carregarClientes() {
+  try {
+    const res = await fetch(`${API}/clientes/`);
+    if (!res.ok) throw new Error("Erro ao buscar clientes");
+    const clientes = await res.json();
+
+    const select = document.getElementById("clienteSelect");
+    select.innerHTML = '<option value="">Selecione um cliente</option>';
+
+    clientes.forEach(c => {
+      const opt = document.createElement("option");
+      // Suporte a formatos { id, nome } ou { id_cliente, nome_cliente }
+      const id = c.id ?? c.id_cliente;
+      const nome = c.nome ?? c.nome_cliente ?? "Sem nome";
+      opt.value = id;
+      opt.textContent = `${nome} (ID: ${id})`;
+      select.appendChild(opt);
+    });
+
+  } catch (err) {
+    console.error(err);
+    mostrarMensagem(err.message, "danger");
+  }
+}
+
+// === Criar Novo Equipamento ===
 async function criarEquipamento(payload) {
-  await fetch(`${API}/equipamentos/`, {
-    method: "POST", headers: {"Content-Type": "application/json"},
+  const res = await fetch(`${API}/equipamentos/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => null);
+    throw new Error(text || "Erro ao criar equipamento");
+  }
+
   await carregarEquipamentos();
+  mostrarMensagem("Equipamento adicionado com sucesso!");
 }
 
+// === Deletar Equipamento ===
 async function deletarEquipamento(id) {
-  await fetch(`${API}/equipamentos/${id}`, { method: "DELETE" });
-  await carregarEquipamentos();
+  if (!confirm("Deseja realmente excluir este equipamento?")) return;
+  try {
+    const res = await fetch(`${API}/equipamentos/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Erro ao excluir equipamento");
+    await carregarEquipamentos();
+    mostrarMensagem("Equipamento excluído com sucesso!");
+  } catch (err) {
+    console.error(err);
+    mostrarMensagem(err.message, "danger");
+  }
 }
 
+// === Envio do Formulário ===
 document.getElementById("novoEquipamentoForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
-  await criarEquipamento({
-    nome: form.nome.value,
-    modelo: form.modelo.value,
-    numero_serie: form.numero_serie.value
-  });
-  form.reset();
-  bootstrap.Modal.getInstance(document.getElementById("novoEquipamentoModal")).hide();
+  const btn = form.querySelector('button[type="submit"]');
+  btn.disabled = true;
+
+  try {
+    await criarEquipamento({
+      tipo: form.tipo.value.trim(),
+      marca: form.marca.value.trim(),
+      modelo: form.modelo.value.trim(),
+      numero_serie: form.numero_serie.value.trim(),
+      id_cliente: parseInt(form.id_cliente.value)
+    });
+
+    form.reset();
+    bootstrap.Modal.getInstance(document.getElementById("novoEquipamentoModal")).hide();
+  } catch (err) {
+    mostrarMensagem(err.message, "danger");
+  } finally {
+    btn.disabled = false;
+  }
 });
 
+// === Inicialização ===
 carregarEquipamentos();
+carregarClientes();
 </script>
 {% endblock %}
