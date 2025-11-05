@@ -9,7 +9,12 @@
 <table class="table table-striped" id="ordensTable">
   <thead>
     <tr>
-      <th>ID</th><th>Cliente</th><th>Equipamento</th><th>Descrição</th><th>Status</th><th>Ações</th>
+      <th>ID</th>
+      <th>Cliente</th>
+      <th>Equipamento</th>
+      <th>Descrição</th>
+      <th>Status</th>
+      <th>Ações</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -24,13 +29,20 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <input class="form-control mb-2" name="cliente_id" placeholder="ID Cliente" required>
-        <input class="form-control mb-2" name="equipamento_id" placeholder="ID Equipamento" required>
+        <label for="clienteSelect" class="form-label">Cliente</label>
+        <select class="form-control mb-2" id="clienteSelect" name="cliente_id" required></select>
+
+        <label for="equipamentoSelect" class="form-label">Equipamento</label>
+        <select class="form-control mb-2" id="equipamentoSelect" name="equipamento_id">
+          <option value="">Nenhum equipamento</option>
+        </select>
+
         <textarea class="form-control mb-2" name="descricao" placeholder="Descrição do problema" required></textarea>
+
         <select class="form-control mb-2" name="status">
-          <option value="aberta">Aberta</option>
-          <option value="em andamento">Em andamento</option>
-          <option value="concluída">Concluída</option>
+          <option value="Aberta">Aberta</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Fechada">Fechada</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -44,50 +56,99 @@
 <script>
 const API = "http://127.0.0.1:8000";
 
+// --- ORDENS ---
 async function carregarOrdens() {
-  const res = await fetch(`${API}/ordens_servico/`);
+  const res = await fetch(`${API}/ordens/`);
   const data = await res.json();
   const tbody = document.querySelector("#ordensTable tbody");
   tbody.innerHTML = "";
   data.forEach(o => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${o.id ?? ""}</td>
-      <td>${o.cliente_id}</td>
-      <td>${o.equipamento_id}</td>
-      <td>${o.descricao}</td>
-      <td>${o.status}</td>
-      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id})">Excluir</button></td>`;
+      <td>${o.id_os ?? ""}</td>
+      <td>${o.cliente_nome ?? "Cliente inexistente"}</td>
+      <td>${o.equipamento_nome ?? "Nenhum"}</td>
+      <td>${o.descricao ?? ""}</td>
+      <td>${o.status ?? ""}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id_os})">Excluir</button>
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 }
 
+// --- CLIENTES ---
+async function carregarClientes() {
+  const res = await fetch(`${API}/clientes/`);
+  const data = await res.json();
+  const select = document.getElementById("clienteSelect");
+  select.innerHTML = '<option value="">Selecione um cliente</option>';
+  data.forEach(c => {
+    const opt = document.createElement("option");
+    opt.value = c.id_cliente ?? c.id;
+    opt.textContent = `${c.nome} (ID ${c.id_cliente ?? c.id})`;
+    select.appendChild(opt);
+  });
+}
+
+// --- EQUIPAMENTOS ---
+async function carregarEquipamentos() {
+  const res = await fetch(`${API}/equipamentos/`);
+  const data = await res.json();
+  const select = document.getElementById("equipamentoSelect");
+  select.innerHTML = '<option value="">Nenhum equipamento</option>';
+  data.forEach(e => {
+    const opt = document.createElement("option");
+    opt.value = e.id ?? e.id_equipamento;
+    opt.textContent = `${e.nome ?? e.tipo ?? "Equipamento"} (${e.modelo ?? "modelo desconhecido"})`;
+    select.appendChild(opt);
+  });
+}
+
+// --- CRIAÇÃO ---
 async function criarOrdem(payload) {
-  await fetch(`${API}/ordens_servico/`, {
-    method: "POST", headers: {"Content-Type": "application/json"},
+  const res = await fetch(`${API}/ordens/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+  if (!res.ok) {
+    console.error("Erro ao salvar:", await res.text());
+    alert("Erro ao salvar ordem. Verifique o console (F12).");
+    return;
+  }
+
   await carregarOrdens();
 }
 
+// --- DELEÇÃO ---
 async function deletarOrdem(id) {
-  await fetch(`${API}/ordens_servico/${id}`, { method: "DELETE" });
+  await fetch(`${API}/ordens/${id}`, { method: "DELETE" });
   await carregarOrdens();
 }
 
+// --- SUBMISSÃO DO FORM ---
 document.getElementById("novaOrdemForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
-  await criarOrdem({
-    cliente_id: parseInt(form.cliente_id.value),
-    equipamento_id: parseInt(form.equipamento_id.value),
+  const payload = {
+    id_cliente: parseInt(form.cliente_id.value),
+    equipamento_id: form.equipamento_id.value ? parseInt(form.equipamento_id.value) : null,
     descricao: form.descricao.value,
     status: form.status.value
-  });
+  };
+  await criarOrdem(payload);
   form.reset();
   bootstrap.Modal.getInstance(document.getElementById("novaOrdemModal")).hide();
 });
 
-carregarOrdens();
+// --- INICIALIZAÇÃO ---
+(async function init() {
+  await carregarClientes();
+  await carregarEquipamentos();
+  await carregarOrdens();
+})();
 </script>
 {% endblock %}
