@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Ordens de Serviço{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>Ordens de Serviço</h2>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaOrdemModal">Nova Ordem</button>
+  <button class="btn btn-primary" onclick="abrirNovaOrdem()">Nova Ordem</button>
 </div>
 
 <table class="table table-striped" id="ordensTable">
@@ -55,6 +56,7 @@
 
 <script>
 const API = "http://127.0.0.1:8000";
+let ordemAtualId = null; // ID da ordem sendo editada
 
 // --- ORDENS ---
 async function carregarOrdens() {
@@ -71,6 +73,7 @@ async function carregarOrdens() {
       <td>${o.descricao ?? ""}</td>
       <td>${o.status ?? ""}</td>
       <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editarOrdem(${o.id_os})">Editar</button>
         <button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id_os})">Excluir</button>
       </td>
     `;
@@ -106,30 +109,32 @@ async function carregarEquipamentos() {
   });
 }
 
-// --- CRIAÇÃO ---
-async function criarOrdem(payload) {
-  const res = await fetch(`${API}/ordens/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    console.error("Erro ao salvar:", await res.text());
-    alert("Erro ao salvar ordem. Verifique o console (F12).");
-    return;
-  }
-
-  await carregarOrdens();
+// --- ABRIR MODAL NOVA ORDEM ---
+function abrirNovaOrdem() {
+  ordemAtualId = null;
+  const form = document.getElementById("novaOrdemForm");
+  form.reset();
+  document.querySelector("#novaOrdemModal .modal-title").textContent = "Nova Ordem de Serviço";
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("novaOrdemModal")).show();
 }
 
-// --- DELEÇÃO ---
-async function deletarOrdem(id) {
-  await fetch(`${API}/ordens/${id}`, { method: "DELETE" });
-  await carregarOrdens();
+// --- EDITAR ---
+async function editarOrdem(id) {
+  const res = await fetch(`${API}/ordens/${id}`);
+  const o = await res.json();
+  ordemAtualId = id;
+
+  const form = document.getElementById("novaOrdemForm");
+  form.cliente_id.value = o.id_cliente;
+  form.equipamento_id.value = o.equipamento_id ?? "";
+  form.descricao.value = o.descricao;
+  form.status.value = o.status;
+
+  document.querySelector("#novaOrdemModal .modal-title").textContent = "Editar Ordem de Serviço";
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("novaOrdemModal")).show();
 }
 
-// --- SUBMISSÃO DO FORM ---
+// --- CRIAÇÃO / ATUALIZAÇÃO ---
 document.getElementById("novaOrdemForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
@@ -139,10 +144,44 @@ document.getElementById("novaOrdemForm").addEventListener("submit", async (e) =>
     descricao: form.descricao.value,
     status: form.status.value
   };
-  await criarOrdem(payload);
+
+  if (ordemAtualId) {
+    // Atualização
+    const res = await fetch(`${API}/ordens/${ordemAtualId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      console.error("Erro ao atualizar:", await res.text());
+      alert("Erro ao atualizar ordem. Verifique o console (F12).");
+      return;
+    }
+  } else {
+    // Criação
+    const res = await fetch(`${API}/ordens/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      console.error("Erro ao criar:", await res.text());
+      alert("Erro ao criar ordem. Verifique o console (F12).");
+      return;
+    }
+  }
+
+  ordemAtualId = null;
   form.reset();
   bootstrap.Modal.getInstance(document.getElementById("novaOrdemModal")).hide();
+  await carregarOrdens();
 });
+
+// --- DELEÇÃO ---
+async function deletarOrdem(id) {
+  await fetch(`${API}/ordens/${id}`, { method: "DELETE" });
+  await carregarOrdens();
+}
 
 // --- INICIALIZAÇÃO ---
 (async function init() {
