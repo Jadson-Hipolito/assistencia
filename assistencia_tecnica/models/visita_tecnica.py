@@ -3,12 +3,12 @@ import os
 import sqlite3
 from typing import Optional, List
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Caminho absoluto para o banco de dados
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DB_PATH = os.path.join(BASE_DIR, "data", "assistencia_tecnica.db")
 
-class VisitaTecnica:
-    DB_PATH = DB_PATH
 
+class VisitaTecnica:
     def __init__(
         self,
         id_visita: Optional[int] = None,
@@ -20,7 +20,7 @@ class VisitaTecnica:
     ):
         self.id_visita = id_visita
         self.id_os = id_os
-        self.funcionario_id = funcionario_id
+        self.funcionario_id = funcionario_id  # será gravado como "tecnico" no banco
         self.data = data
         self.horario = horario
         self.observacoes = observacoes
@@ -29,26 +29,25 @@ class VisitaTecnica:
 
     def salvar(self) -> None:
         try:
-            with sqlite3.connect(self.DB_PATH) as conn:
+            with sqlite3.connect(DB_PATH) as conn:
                 cursor = conn.cursor()
                 if self.id_visita is None:
                     cursor.execute(
                         """
-                        INSERT INTO visita_tecnica 
-                        (id_os, funcionario_id, data, horario, observacoes)
+                        INSERT INTO visita_tecnica (id_os, data, horario, tecnico, observacoes)
                         VALUES (?, ?, ?, ?, ?)
                         """,
-                        (self.id_os, self.funcionario_id, self.data, self.horario, self.observacoes)
+                        (self.id_os, self.data, self.horario, self.funcionario_id, self.observacoes)
                     )
                     self.id_visita = cursor.lastrowid
                 else:
                     cursor.execute(
                         """
-                        UPDATE visita_tecnica 
-                        SET id_os=?, funcionario_id=?, data=?, horario=?, observacoes=?
+                        UPDATE visita_tecnica
+                        SET id_os=?, data=?, horario=?, tecnico=?, observacoes=?
                         WHERE id_visita=?
                         """,
-                        (self.id_os, self.funcionario_id, self.data, self.horario, self.observacoes, self.id_visita)
+                        (self.id_os, self.data, self.horario, self.funcionario_id, self.observacoes, self.id_visita)
                     )
                 conn.commit()
         except sqlite3.Error as e:
@@ -58,15 +57,26 @@ class VisitaTecnica:
     @staticmethod
     def consultar(id_visita: int) -> Optional["VisitaTecnica"]:
         try:
-            with sqlite3.connect(VisitaTecnica.DB_PATH) as conn:
+            with sqlite3.connect(DB_PATH) as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "SELECT id_visita, id_os, funcionario_id, data, horario, observacoes FROM visita_tecnica WHERE id_visita=?",
+                    """
+                    SELECT id_visita, id_os, tecnico, data, horario, observacoes
+                    FROM visita_tecnica
+                    WHERE id_visita=?
+                    """,
                     (id_visita,)
                 )
                 row = cursor.fetchone()
                 if row:
-                    return VisitaTecnica(*row)
+                    return VisitaTecnica(
+                        id_visita=row[0],
+                        id_os=row[1],
+                        funcionario_id=row[2],
+                        data=row[3],
+                        horario=row[4],
+                        observacoes=row[5]
+                    )
         except sqlite3.Error as e:
             print(f"[ERRO] consultar visita: {e}")
         return None
@@ -75,19 +85,26 @@ class VisitaTecnica:
     def listar_todos() -> List["VisitaTecnica"]:
         visitas: List[VisitaTecnica] = []
         try:
-            with sqlite3.connect(VisitaTecnica.DB_PATH) as conn:
+            with sqlite3.connect(DB_PATH) as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
-                    SELECT vt.id_visita, vt.id_os, vt.funcionario_id, vt.data, vt.horario, vt.observacoes,
+                    SELECT vt.id_visita, vt.id_os, vt.tecnico, vt.data, vt.horario, vt.observacoes,
                            o.descricao AS ordem_nome, f.nome AS funcionario_nome
                     FROM visita_tecnica vt
                     LEFT JOIN ordem_servico o ON vt.id_os = o.id_os
-                    LEFT JOIN funcionario f ON vt.funcionario_id = f.id_funcionario
+                    LEFT JOIN funcionario f ON vt.tecnico = f.id_funcionario
                 """)
                 for row in cursor.fetchall():
-                    vt = VisitaTecnica(*row[:6])
-                    vt.ordem_nome = row[6] if row[6] else "Ordem inexistente"
-                    vt.funcionario_nome = row[7] if row[7] else "Funcionário inexistente"
+                    vt = VisitaTecnica(
+                        id_visita=row[0],
+                        id_os=row[1],
+                        funcionario_id=row[2],
+                        data=row[3],
+                        horario=row[4],
+                        observacoes=row[5]
+                    )
+                    vt.ordem_nome = row[6] or "Ordem inexistente"
+                    vt.funcionario_nome = row[7] or "Funcionário inexistente"
                     visitas.append(vt)
         except sqlite3.Error as e:
             print(f"[ERRO] listar visitas: {e}")
@@ -96,7 +113,7 @@ class VisitaTecnica:
     @staticmethod
     def excluir(id_visita: int) -> None:
         try:
-            with sqlite3.connect(VisitaTecnica.DB_PATH) as conn:
+            with sqlite3.connect(DB_PATH) as conn:
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM visita_tecnica WHERE id_visita=?", (id_visita,))
                 conn.commit()
