@@ -9,7 +9,13 @@
 <table class="table table-striped" id="visitasTable">
   <thead>
     <tr>
-      <th>ID</th><th>Ordem</th><th>Funcionário</th><th>Data</th><th>Observações</th><th>Ações</th>
+      <th>ID</th>
+      <th>Ordem</th>
+      <th>Técnico</th>
+      <th>Data</th>
+      <th>Horário</th>
+      <th>Observações</th>
+      <th>Ações</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -24,9 +30,19 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <input class="form-control mb-2" name="ordem_id" placeholder="ID Ordem" required>
-        <input class="form-control mb-2" name="funcionario_id" placeholder="ID Funcionário" required>
+        <label for="osSelect" class="form-label">Ordem de Serviço</label>
+        <select class="form-control mb-2" id="osSelect" name="id_os" required></select>
+
+        <label for="funcionarioSelect" class="form-label">Técnico</label>
+        <select class="form-control mb-2" id="funcionarioSelect" name="funcionario_id" required></select>
+
+        <label for="dataInput" class="form-label">Data</label>
         <input class="form-control mb-2" type="date" name="data" required>
+
+        <label for="horarioInput" class="form-label">Horário</label>
+        <input class="form-control mb-2" type="time" name="horario">
+
+        <label for="observacoesInput" class="form-label">Observações</label>
         <textarea class="form-control mb-2" name="observacoes" placeholder="Observações"></textarea>
       </div>
       <div class="modal-footer">
@@ -40,50 +56,118 @@
 <script>
 const API = "http://127.0.0.1:8000";
 
+// --- CARREGAR VISITAS ---
 async function carregarVisitas() {
-  const res = await fetch(`${API}/visitas_tecnicas/`);
+  const res = await fetch(`${API}/visitas/`);
   const data = await res.json();
   const tbody = document.querySelector("#visitasTable tbody");
   tbody.innerHTML = "";
   data.forEach(v => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${v.id ?? ""}</td>
-      <td>${v.ordem_id}</td>
-      <td>${v.funcionario_id}</td>
+      <td>${v.id_visita}</td>
+      <td>${v.id_os} - ${v.ordem_nome ?? "Ordem inexistente"}</td>
+      <td>${v.funcionario_id} - ${v.funcionario_nome ?? "Técnico inexistente"}</td>
       <td>${v.data}</td>
+      <td>${v.horario ?? ""}</td>
       <td>${v.observacoes ?? ""}</td>
-      <td><button class="btn btn-sm btn-outline-danger" onclick="deletarVisita(${v.id})">Excluir</button></td>`;
+      <td>
+        <button class="btn btn-sm btn-outline-danger" onclick="deletarVisita(${v.id_visita})">Excluir</button>
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 }
 
+// --- CARREGAR ORDENS ---
+async function carregarOrdens() {
+  const res = await fetch(`${API}/ordens/`);
+  const data = await res.json();
+  const select = document.getElementById("osSelect");
+  select.innerHTML = '<option value="">Selecione uma Ordem</option>';
+  data.forEach(o => {
+    const opt = document.createElement("option");
+    opt.value = o.id_os;
+    opt.textContent = `OS ${o.id_os} - ${o.cliente_nome ?? "Cliente inexistente"}`;
+    select.appendChild(opt);
+  });
+}
+
+// --- CARREGAR FUNCIONÁRIOS ---
+async function carregarFuncionarios() {
+  const res = await fetch(`${API}/funcionarios/`);
+  const data = await res.json();
+  const select = document.getElementById("funcionarioSelect");
+  select.innerHTML = '<option value="">Selecione um Técnico</option>';
+  data.forEach(f => {
+    const opt = document.createElement("option");
+    opt.value = f.id_funcionario;
+    opt.textContent = `${f.nome} (ID ${f.id_funcionario})`;
+    select.appendChild(opt);
+  });
+}
+
+// --- CRIAR VISITA ---
 async function criarVisita(payload) {
-  await fetch(`${API}/visitas_tecnicas/`, {
-    method: "POST", headers: {"Content-Type": "application/json"},
+  // Validação antes de enviar
+  if (!payload.id_os || !payload.funcionario_id || !payload.data) {
+    alert("Ordem, Técnico e Data são obrigatórios!");
+    return;
+  }
+
+  const res = await fetch(`${API}/visitas/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("Erro ao salvar visita:", text);
+    alert("Erro ao salvar visita. Verifique o console.");
+    return;
+  }
+
   await carregarVisitas();
 }
 
+// --- DELETAR VISITA ---
 async function deletarVisita(id) {
-  await fetch(`${API}/visitas_tecnicas/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API}/visitas/${id}`, { method: "DELETE" });
+  if (!res.ok) {
+    alert("Erro ao deletar visita.");
+    return;
+  }
   await carregarVisitas();
 }
 
+// --- SUBMIT FORM ---
 document.getElementById("novaVisitaForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const form = e.target;
-  await criarVisita({
-    ordem_id: parseInt(form.ordem_id.value),
+  const payload = {
+    id_os: parseInt(form.id_os.value),
     funcionario_id: parseInt(form.funcionario_id.value),
     data: form.data.value,
-    observacoes: form.observacoes.value
-  });
+    horario: form.horario.value || null,
+    observacoes: form.observacoes.value || null
+  };
+
+  if (isNaN(payload.id_os) || isNaN(payload.funcionario_id)) {
+    alert("Selecione Ordem e Técnico válidos!");
+    return;
+  }
+
+  await criarVisita(payload);
   form.reset();
   bootstrap.Modal.getInstance(document.getElementById("novaVisitaModal")).hide();
 });
 
-carregarVisitas();
+// --- INIT ---
+(async function init() {
+  await carregarOrdens();
+  await carregarFuncionarios();
+  await carregarVisitas();
+})();
 </script>
 {% endblock %}
