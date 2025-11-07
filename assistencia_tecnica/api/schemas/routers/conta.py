@@ -1,7 +1,14 @@
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, condecimal
+from typing import Optional
 from assistencia_tecnica.views import conta_view
 
 router = APIRouter(prefix="/contas", tags=["Contas"])
+
+class ContaIn(BaseModel):
+    id_os: int
+    valor: condecimal(decimal_places=2, gt=0)
+    tipo: Optional[str] = "Receber"
 
 @router.get("/")
 def listar_contas():
@@ -19,8 +26,13 @@ def obter_conta(conta_id: int):
     return conta
 
 @router.post("/")
-def criar_conta(conta: dict):
-    return conta_view.criar_conta(conta)
+def criar_conta(conta: ContaIn):
+    try:
+        return conta_view.criar_conta(conta.dict())
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao criar conta: {e}")
 
 @router.put("/{conta_id}/pagar")
 def pagar_conta(conta_id: int):
