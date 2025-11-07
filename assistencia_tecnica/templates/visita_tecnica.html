@@ -67,7 +67,7 @@ async function carregarVisitas() {
     tr.innerHTML = `
       <td>${v.id_visita}</td>
       <td>${v.id_os} - ${v.ordem_nome ?? "Ordem inexistente"}</td>
-      <td>${v.funcionario_id} - ${v.funcionario_nome ?? "Técnico inexistente"}</td>
+      <td>${v.tecnico} - ${v.funcionario_nome ?? "Técnico inexistente"}</td>
       <td>${v.data}</td>
       <td>${v.horario ?? ""}</td>
       <td>${v.observacoes ?? ""}</td>
@@ -93,24 +93,44 @@ async function carregarOrdens() {
   });
 }
 
-// --- CARREGAR FUNCIONÁRIOS ---
+// --- CARREGAR FUNCIONÁRIOS (versão debug + fallback) ---
 async function carregarFuncionarios() {
-  const res = await fetch(`${API}/funcionarios/`);
-  const data = await res.json();
-  const select = document.getElementById("funcionarioSelect");
-  select.innerHTML = '<option value="">Selecione um Técnico</option>';
-  data.forEach(f => {
-    const opt = document.createElement("option");
-    opt.value = f.id_funcionario;
-    opt.textContent = `${f.nome} (ID ${f.id_funcionario})`;
-    select.appendChild(opt);
-  });
+  try {
+    const res = await fetch(`${API}/funcionarios/`);
+    const data = await res.json();
+    console.log("carregarFuncionarios - dados recebidos:", data); // <<--- veja o console
+
+    const select = document.getElementById("funcionarioSelect");
+    select.innerHTML = '<option value="">Selecione um Técnico</option>';
+
+    data.forEach((f, idx) => {
+      // Tentar vários nomes comuns de campo de id
+      const id = f.id_funcionario ?? f.id ?? f.idFuncionario ?? f.employee_id ?? null;
+
+      const opt = document.createElement("option");
+      // Se não encontrou um id numérico, use um fallback seguro (índice) mas marque como inválido
+      if (id == null) {
+        // registra para depuração
+        console.warn(`Funcionário sem ID encontrado na posição ${idx}:`, f);
+        opt.value = ""; // mantém inválido
+      } else {
+        opt.value = id;
+      }
+
+      // texto amigável
+      opt.textContent = `${f.nome ?? f.name ?? "Sem nome"}${id != null ? ` (ID ${id})` : ""}`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Erro ao carregar funcionários:", err);
+    alert("Erro ao carregar técnicos. Veja o console.");
+  }
 }
+
 
 // --- CRIAR VISITA ---
 async function criarVisita(payload) {
-  // Validação antes de enviar
-  if (!payload.id_os || !payload.funcionario_id || !payload.data) {
+  if (!payload.id_os || !payload.tecnico || !payload.data) {
     alert("Ordem, Técnico e Data são obrigatórios!");
     return;
   }
@@ -147,13 +167,13 @@ document.getElementById("novaVisitaForm").addEventListener("submit", async (e) =
   const form = e.target;
   const payload = {
     id_os: parseInt(form.id_os.value),
-    funcionario_id: parseInt(form.funcionario_id.value),
+    tecnico: parseInt(form.funcionario_id.value), // 👈 Corrigido aqui
     data: form.data.value,
     horario: form.horario.value || null,
     observacoes: form.observacoes.value || null
   };
 
-  if (isNaN(payload.id_os) || isNaN(payload.funcionario_id)) {
+  if (isNaN(payload.id_os) || isNaN(payload.tecnico)) {
     alert("Selecione Ordem e Técnico válidos!");
     return;
   }
