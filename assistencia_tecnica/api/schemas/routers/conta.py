@@ -28,6 +28,7 @@ def obter_conta(conta_id: int):
 @router.post("/")
 def criar_conta(conta: ContaIn):
     try:
+        # conta.dict() pode conter Decimal; view tratará a conversão
         return conta_view.criar_conta(conta.dict())
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))

@@ -1,5 +1,4 @@
 from typing import Optional, List
-from fastapi import HTTPException
 from assistencia_tecnica.models.conta import Conta
 
 def listar_contas() -> List[dict]:
@@ -13,14 +12,20 @@ def obter_conta(id_conta: int) -> Optional[dict]:
     return conta.to_dict() if conta else None
 
 def criar_conta(data: dict) -> dict:
+    # Converte valor (pydantic condecimal -> Decimal) para float seguro
     id_os = data.get("id_os")
-    valor = data.get("valor")
+    valor_raw = data.get("valor")
     tipo = data.get("tipo", "Receber")
 
-    if id_os is None or valor is None:
+    if id_os is None or valor_raw is None:
         raise ValueError("id_os e valor são obrigatórios para criar uma conta")
 
-    conta = Conta(id_os=id_os, valor=valor, tipo=tipo)
+    try:
+        valor = float(valor_raw)
+    except Exception:
+        raise ValueError("valor inválido")
+
+    conta = Conta(id_conta=None, id_os=id_os, valor=valor, tipo=tipo)
     conta.salvar()
     return conta.to_dict()
 

@@ -61,11 +61,13 @@ async function carregarContas() {
   const tbody = document.querySelector("#contasTable tbody");
   tbody.innerHTML = "";
   data.forEach(c => {
+    const valor = Number(c.valor || 0).toFixed(2);
+    const cliente = c.cliente_nome ? c.cliente_nome : "Cliente inexistente";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${c.id_conta}</td>
-      <td>${c.id_os} - ${c.cliente_nome ? c.cliente_nome : "Cliente inexistente"}</td>
-      <td>${c.valor.toFixed(2)}</td>
+      <td>${c.id_os} - ${cliente}</td>
+      <td>${valor}</td>
       <td>${c.status}</td>
       <td>${c.tipo}</td>
       <td>
@@ -79,13 +81,18 @@ async function carregarContas() {
 
 async function carregarOrdensConta() {
   const res = await fetch(`${API}/ordens/`);
+  if (!res.ok) {
+    console.error("Erro carregando ordens:", await res.text());
+    return;
+  }
   const data = await res.json();
   const select = document.getElementById("osSelectConta");
   select.innerHTML = '<option value="">Selecione uma Ordem</option>';
   data.forEach(o => {
     const opt = document.createElement("option");
     opt.value = o.id_os;
-    opt.textContent = `OS ${o.id_os} - ${o.cliente_nome ? o.cliente_nome : "Cliente inexistente"}`;
+    const cliente = o.cliente_nome ? o.cliente_nome : "Cliente inexistente";
+    opt.textContent = `OS ${o.id_os} - ${cliente}`;
     select.appendChild(opt);
   });
 }
@@ -101,8 +108,8 @@ async function criarConta(payload) {
     body: JSON.stringify(payload)
   });
   if (!res.ok) {
-    const text = await res.text();
-    console.error("Erro ao salvar conta:", text);
+    const txt = await res.text();
+    console.error("Erro ao salvar conta:", txt);
     alert("Erro ao salvar conta. Veja o console.");
     return;
   }
