@@ -12,7 +12,7 @@
     <tr>
       <th>ID</th>
       <th>Cliente</th>
-      <th>Equipamento</th>
+      <th>Equipamentos</th>
       <th>Descrição</th>
       <th>Status</th>
       <th>Ações</th>
@@ -21,7 +21,7 @@
   <tbody></tbody>
 </table>
 
-<!-- Modal -->
+<!-- Modal de criação -->
 <div class="modal fade" id="novaOrdemModal" tabindex="-1">
   <div class="modal-dialog">
     <form class="modal-content" id="novaOrdemForm">
@@ -29,23 +29,30 @@
         <h5 class="modal-title">Nova Ordem de Serviço</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body">
-        <label for="clienteSelect" class="form-label">Cliente</label>
-        <select class="form-control mb-2" id="clienteSelect" name="cliente_id" required></select>
 
-        <label for="equipamentoSelect" class="form-label">Equipamento</label>
-        <select class="form-control mb-2" id="equipamentoSelect" name="equipamento_id">
-          <option value="">Nenhum equipamento</option>
+      <div class="modal-body">
+        <label>Cliente</label>
+        <select class="form-control mb-2" id="clienteSelect" name="id_cliente" required>
+          <option value="">Selecione...</option>
         </select>
 
-        <textarea class="form-control mb-2" name="descricao" placeholder="Descrição do problema" required></textarea>
+        <label>Equipamentos</label>
+        <div class="d-flex flex-wrap gap-2 mb-2" id="equipamentoTags"></div>
+        <select class="form-control" id="equipamentoSelect" onchange="adicionarEquipamento()">
+          <option value="">Selecione...</option>
+        </select>
 
-        <select class="form-control mb-2" name="status">
-          <option value="Aberta">Aberta</option>
-          <option value="Em andamento">Em andamento</option>
-          <option value="Fechada">Fechada</option>
+        <label class="mt-3">Descrição</label>
+        <textarea class="form-control" id="descricao" placeholder="Descreva o problema ou serviço..." required></textarea>
+
+        <label class="mt-3">Status</label>
+        <select class="form-control" id="status">
+          <option>Aberta</option>
+          <option>Em andamento</option>
+          <option>Fechada</option>
         </select>
       </div>
+
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
         <button class="btn btn-primary" type="submit">Salvar</button>
@@ -56,134 +63,138 @@
 
 <script>
 const API = "http://127.0.0.1:8000";
-let ordemAtualId = null; // ID da ordem sendo editada
+let equipamentos = [];
+let equipamentosSelecionados = [];
 
-// --- ORDENS ---
+// ---------- Carregamento de dados ----------
 async function carregarOrdens() {
   const res = await fetch(`${API}/ordens/`);
   const data = await res.json();
   const tbody = document.querySelector("#ordensTable tbody");
   tbody.innerHTML = "";
   data.forEach(o => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${o.id_os ?? ""}</td>
-      <td>${o.cliente_nome ?? "Cliente inexistente"}</td>
-      <td>${o.equipamento_nome ?? "Nenhum"}</td>
-      <td>${o.descricao ?? ""}</td>
-      <td>${o.status ?? ""}</td>
-      <td>
-        <button class="btn btn-sm btn-outline-primary" onclick="editarOrdem(${o.id_os})">Editar</button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id_os})">Excluir</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+    const eqs = o.equipamentos.map(e => e.nome).join(", ") || "-";
+    tbody.innerHTML += `
+      <tr>
+        <td>${o.id_os}</td>
+        <td>${o.cliente_nome}</td>
+        <td>${eqs}</td>
+        <td>${o.descricao}</td>
+        <td>${o.status}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id_os})">Excluir</button>
+        </td>
+      </tr>`;
   });
 }
 
-// --- CLIENTES ---
 async function carregarClientes() {
   const res = await fetch(`${API}/clientes/`);
   const data = await res.json();
   const select = document.getElementById("clienteSelect");
-  select.innerHTML = '<option value="">Selecione um cliente</option>';
+  select.innerHTML = '<option value="">Selecione...</option>';
+
+  // Corrigido: usar c.id que o backend retorna
   data.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c.id_cliente ?? c.id;
-    opt.textContent = `${c.nome} (ID ${c.id_cliente ?? c.id})`;
-    select.appendChild(opt);
+    if(c.id !== null && c.id !== undefined) {
+      select.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+    }
   });
 }
 
-// --- EQUIPAMENTOS ---
 async function carregarEquipamentos() {
   const res = await fetch(`${API}/equipamentos/`);
-  const data = await res.json();
+  equipamentos = await res.json();
+  atualizarDropdown();
+}
+
+// ---------- Dropdown de equipamentos ----------
+function atualizarDropdown() {
   const select = document.getElementById("equipamentoSelect");
-  select.innerHTML = '<option value="">Nenhum equipamento</option>';
-  data.forEach(e => {
-    const opt = document.createElement("option");
-    opt.value = e.id ?? e.id_equipamento;
-    opt.textContent = `${e.nome ?? e.tipo ?? "Equipamento"} (${e.modelo ?? "modelo desconhecido"})`;
-    select.appendChild(opt);
+  select.innerHTML = '<option value="">Selecione...</option>';
+  equipamentos
+    .filter(e => !equipamentosSelecionados.includes(e.id_equipamento))
+    .forEach(e => {
+      select.innerHTML += `<option value="${e.id_equipamento}">${e.tipo} ${e.modelo}</option>`;
+    });
+}
+
+function adicionarEquipamento() {
+  const select = document.getElementById("equipamentoSelect");
+  const id = parseInt(select.value, 10);
+  if (!id || equipamentosSelecionados.includes(id)) return;
+  equipamentosSelecionados.push(id);
+  renderizarTags();
+  atualizarDropdown();
+}
+
+function removerEquipamento(id) {
+  equipamentosSelecionados = equipamentosSelecionados.filter(e => e !== id);
+  renderizarTags();
+  atualizarDropdown();
+}
+
+function renderizarTags() {
+  const container = document.getElementById("equipamentoTags");
+  container.innerHTML = "";
+  equipamentosSelecionados.forEach(i => {
+    const eq = equipamentos.find(e => e.id_equipamento === i);
+    const tag = document.createElement("span");
+    tag.className = "badge bg-primary p-2";
+    tag.innerHTML = `${eq.tipo} ${eq.modelo} <span style="cursor:pointer" onclick="removerEquipamento(${i})">×</span>`;
+    container.appendChild(tag);
   });
 }
 
-// --- ABRIR MODAL NOVA ORDEM ---
-function abrirNovaOrdem() {
-  ordemAtualId = null;
-  const form = document.getElementById("novaOrdemForm");
-  form.reset();
-  document.querySelector("#novaOrdemModal .modal-title").textContent = "Nova Ordem de Serviço";
-  bootstrap.Modal.getOrCreateInstance(document.getElementById("novaOrdemModal")).show();
-}
-
-// --- EDITAR ---
-async function editarOrdem(id) {
-  const res = await fetch(`${API}/ordens/${id}`);
-  const o = await res.json();
-  ordemAtualId = id;
-
-  const form = document.getElementById("novaOrdemForm");
-  form.cliente_id.value = o.id_cliente;
-  form.equipamento_id.value = o.equipamento_id ?? "";
-  form.descricao.value = o.descricao;
-  form.status.value = o.status;
-
-  document.querySelector("#novaOrdemModal .modal-title").textContent = "Editar Ordem de Serviço";
-  bootstrap.Modal.getOrCreateInstance(document.getElementById("novaOrdemModal")).show();
-}
-
-// --- CRIAÇÃO / ATUALIZAÇÃO ---
-document.getElementById("novaOrdemForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const payload = {
-    id_cliente: parseInt(form.cliente_id.value),
-    equipamento_id: form.equipamento_id.value ? parseInt(form.equipamento_id.value) : null,
-    descricao: form.descricao.value,
-    status: form.status.value
-  };
-
-  if (ordemAtualId) {
-    // Atualização
-    const res = await fetch(`${API}/ordens/${ordemAtualId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      console.error("Erro ao atualizar:", await res.text());
-      alert("Erro ao atualizar ordem. Verifique o console (F12).");
-      return;
-    }
-  } else {
-    // Criação
-    const res = await fetch(`${API}/ordens/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-    if (!res.ok) {
-      console.error("Erro ao criar:", await res.text());
-      alert("Erro ao criar ordem. Verifique o console (F12).");
-      return;
-    }
-  }
-
-  ordemAtualId = null;
-  form.reset();
-  bootstrap.Modal.getInstance(document.getElementById("novaOrdemModal")).hide();
-  await carregarOrdens();
-});
-
-// --- DELEÇÃO ---
+// ---------- Ações ----------
 async function deletarOrdem(id) {
+  if (!confirm("Deseja realmente excluir esta ordem?")) return;
   await fetch(`${API}/ordens/${id}`, { method: "DELETE" });
   await carregarOrdens();
 }
 
-// --- INICIALIZAÇÃO ---
+document.getElementById("novaOrdemForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const clienteValue = document.getElementById("clienteSelect").value;
+  if (!clienteValue || isNaN(clienteValue)) {
+    return alert("Selecione um cliente válido!");
+  }
+
+  const payload = {
+    id_cliente: parseInt(clienteValue, 10),
+    equipamentos: equipamentosSelecionados,
+    descricao: document.getElementById("descricao").value,
+    status: document.getElementById("status").value
+  };
+
+  const res = await fetch(`${API}/ordens/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    bootstrap.Modal.getInstance(document.getElementById("novaOrdemModal")).hide();
+    equipamentosSelecionados = [];
+    document.getElementById("equipamentoTags").innerHTML = "";
+    e.target.reset();
+    await carregarOrdens();
+  } else {
+    const erro = await res.json();
+    alert("Erro ao criar ordem: " + JSON.stringify(erro.detail || erro));
+  }
+});
+
+async function abrirNovaOrdem() {
+  equipamentosSelecionados = [];
+  document.getElementById("novaOrdemForm").reset();
+  document.getElementById("equipamentoTags").innerHTML = "";
+  atualizarDropdown();
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("novaOrdemModal")).show();
+}
+
+// ---------- Inicialização ----------
 (async function init() {
   await carregarClientes();
   await carregarEquipamentos();
