@@ -15,6 +15,8 @@
       <th>Equipamentos</th>
       <th>Descrição</th>
       <th>Status</th>
+      <th>Data de Abertura</th>
+      <th>Data de Encerramento</th>
       <th>Ações</th>
     </tr>
   </thead>
@@ -76,20 +78,29 @@ async function carregarOrdens() {
   const tbody = document.querySelector("#ordensTable tbody");
   tbody.innerHTML = "";
   data.forEach(o => {
-    const eqs = o.equipamentos.map(e => e.nome).join(", ") || "-";
+    const eqs = o.equipamentos?.map(e => e.nome || e.modelo || e.tipo).join(", ") || "-";
     tbody.innerHTML += `
       <tr>
         <td>${o.id_os}</td>
-        <td>${o.cliente_nome}</td>
+        <td>${o.cliente_nome || "—"}</td>
         <td>${eqs}</td>
-        <td>${o.descricao}</td>
-        <td>${o.status}</td>
+        <td>${o.descricao || "—"}</td>
+        <td>${o.status || "—"}</td>
+        <td>${formatarData(o.data_abertura)}</td>
+        <td>${o.data_encerramento ? formatarData(o.data_encerramento) : "—"}</td>
         <td>
           <button class="btn btn-sm btn-outline-warning me-2" onclick="abrirEdicao(${o.id_os})">Editar</button>
           <button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id_os})">Excluir</button>
         </td>
       </tr>`;
   });
+}
+
+// === Função para formatar datas ===
+function formatarData(dataStr) {
+  if (!dataStr) return "";
+  const d = new Date(dataStr);
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 // === Carregar Clientes ===
@@ -171,7 +182,7 @@ async function abrirEdicao(id) {
   document.getElementById("clienteSelect").value = ordem.id_cliente;
   document.getElementById("descricao").value = ordem.descricao;
   document.getElementById("status").value = ordem.status;
-  equipamentosSelecionados = ordem.equipamentos.map(e => e.id);
+  equipamentosSelecionados = ordem.equipamentos.map(e => e.id || e.id_equipamento);
   renderizarTags();
   atualizarDropdown();
 

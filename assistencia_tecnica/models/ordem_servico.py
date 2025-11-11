@@ -1,9 +1,11 @@
+# assistencia_tecnica/models/ordem_servico.py
 import os
 import sqlite3
 from datetime import datetime
 from fastapi import HTTPException
 
 DB_PATH = os.path.join("data", "assistencia_tecnica.db")
+
 
 class OrdemServico:
     def __init__(self, id_os=None, id_cliente=None, equipamentos=None,
@@ -90,7 +92,13 @@ class OrdemServico:
         cursor.execute("SELECT id_os FROM ordem_servico")
         ids = [row[0] for row in cursor.fetchall()]
         conn.close()
-        return [OrdemServico.consultar(i).to_dict() for i in ids]
+        # montar lista com .consultar para garantir consistência
+        ordens = []
+        for i in ids:
+            o = OrdemServico.consultar(i)
+            if o:
+                ordens.append(o.to_dict())
+        return ordens
 
     @staticmethod
     def consultar(id_os):
@@ -104,7 +112,20 @@ class OrdemServico:
         conn.close()
         if not row:
             return None
-        ordem = OrdemServico(*row)
+
+        # Mapear explicitamente para evitar deslocamento de campos
+        id_os_val, id_cliente, descricao, status, data_abertura, data_encerramento = row
+
+        ordem = OrdemServico(
+            id_os=id_os_val,
+            id_cliente=id_cliente,
+            descricao=descricao,
+            status=status,
+            data_abertura=data_abertura,
+            data_encerramento=data_encerramento
+        )
+
+        # popular lista de equipamentos (ids) para edição e to_dict
         ordem.equipamentos = [e["id"] for e in ordem._buscar_equipamentos()]
         return ordem
 
