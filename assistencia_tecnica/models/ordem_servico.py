@@ -24,26 +24,33 @@ class OrdemServico:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         try:
+            # === Inserção ===
             if self.id_os is None:
                 cursor.execute("""
                     INSERT INTO ordem_servico (id_cliente, descricao, status, data_abertura, data_encerramento)
                     VALUES (?, ?, ?, ?, ?)
                 """, (self.id_cliente, self.descricao, self.status, self.data_abertura, self.data_encerramento))
                 self.id_os = cursor.lastrowid
+            # === Atualização ===
             else:
+                # Não sobrescreve data_abertura existente
                 cursor.execute("""
                     UPDATE ordem_servico
-                    SET id_cliente=?, descricao=?, status=?, data_abertura=?, data_encerramento=?
+                    SET id_cliente=?, descricao=?, status=?, data_encerramento=?
                     WHERE id_os=?
-                """, (self.id_cliente, self.descricao, self.status, self.data_abertura, self.data_encerramento, self.id_os))
+                """, (self.id_cliente, self.descricao, self.status, self.data_encerramento, self.id_os))
+
                 cursor.execute("DELETE FROM ordem_servico_equipamento WHERE id_os=?", (self.id_os,))
 
+            # === Atualizar relação com equipamentos ===
             for eq_id in self.equipamentos:
                 cursor.execute("""
                     INSERT INTO ordem_servico_equipamento (id_os, id_equipamento)
                     VALUES (?, ?)
                 """, (self.id_os, eq_id))
+
             conn.commit()
+
         except sqlite3.OperationalError as e:
             raise HTTPException(status_code=500, detail=f"Erro no banco: {str(e)}")
         finally:
@@ -92,7 +99,6 @@ class OrdemServico:
         cursor.execute("SELECT id_os FROM ordem_servico")
         ids = [row[0] for row in cursor.fetchall()]
         conn.close()
-        # montar lista com .consultar para garantir consistência
         ordens = []
         for i in ids:
             o = OrdemServico.consultar(i)
@@ -113,7 +119,6 @@ class OrdemServico:
         if not row:
             return None
 
-        # Mapear explicitamente para evitar deslocamento de campos
         id_os_val, id_cliente, descricao, status, data_abertura, data_encerramento = row
 
         ordem = OrdemServico(
@@ -125,7 +130,6 @@ class OrdemServico:
             data_encerramento=data_encerramento
         )
 
-        # popular lista de equipamentos (ids) para edição e to_dict
         ordem.equipamentos = [e["id"] for e in ordem._buscar_equipamentos()]
         return ordem
 

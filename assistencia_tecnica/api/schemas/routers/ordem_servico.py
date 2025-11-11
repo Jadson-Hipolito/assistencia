@@ -1,14 +1,16 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional, List
 from assistencia_tecnica.views import ordem_servico_view
 
 router = APIRouter(prefix="/ordens", tags=["Ordens de Serviço"])
 
 class OrdemCreateSchema(BaseModel):
     id_cliente: int
-    equipamentos: list[int] = []
+    equipamentos: List[int] = []
     descricao: str
     status: str = "Aberta"
+    data_encerramento: Optional[str] = None
 
 @router.get("/")
 def listar_ordens():

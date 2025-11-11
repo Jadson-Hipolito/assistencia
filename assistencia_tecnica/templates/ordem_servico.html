@@ -51,10 +51,13 @@
 
         <label class="mt-3">Status</label>
         <select class="form-control" id="status">
-          <option>Aberta</option>
-          <option>Em andamento</option>
-          <option>Fechada</option>
+          <option value="Aberta">Aberta</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Fechada">Fechada</option>
         </select>
+
+        <label class="mt-3">Data de Encerramento</label>
+        <input type="date" class="form-control" id="data_encerramento" />
       </div>
 
       <div class="modal-footer">
@@ -77,8 +80,9 @@ async function carregarOrdens() {
   const data = await res.json();
   const tbody = document.querySelector("#ordensTable tbody");
   tbody.innerHTML = "";
+
   data.forEach(o => {
-    const eqs = o.equipamentos?.map(e => e.nome || e.modelo || e.tipo).join(", ") || "-";
+    const eqs = o.equipamentos?.map(e => e.nome || `${e.tipo} ${e.modelo}` || e.tipo).join(", ") || "—";
     tbody.innerHTML += `
       <tr>
         <td>${o.id_os}</td>
@@ -96,10 +100,11 @@ async function carregarOrdens() {
   });
 }
 
-// === Função para formatar datas ===
+// === Função para formatar datas (DD/MM/YYYY) ===
 function formatarData(dataStr) {
   if (!dataStr) return "";
   const d = new Date(dataStr);
+  if (isNaN(d)) return dataStr;
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
@@ -152,8 +157,9 @@ function renderizarTags() {
   container.innerHTML = "";
   equipamentosSelecionados.forEach(i => {
     const eq = equipamentos.find(e => e.id_equipamento === i);
+    if (!eq) return;
     const tag = document.createElement("span");
-    tag.className = "badge bg-primary p-2";
+    tag.className = "badge bg-primary p-2 me-1";
     tag.innerHTML = `${eq.tipo} ${eq.modelo} <span style="cursor:pointer" onclick="removerEquipamento(${i})">×</span>`;
     container.appendChild(tag);
   });
@@ -166,6 +172,7 @@ function abrirNovaOrdem() {
   document.getElementById("ordemForm").reset();
   document.getElementById("equipamentoTags").innerHTML = "";
   document.getElementById("ordemId").value = "";
+  document.getElementById("data_encerramento").value = "";
   document.getElementById("ordemModalTitulo").textContent = "Nova Ordem";
   bootstrap.Modal.getOrCreateInstance(document.getElementById("ordemModal")).show();
   atualizarDropdown();
@@ -179,12 +186,30 @@ async function abrirEdicao(id) {
   const ordem = await res.json();
 
   document.getElementById("ordemId").value = ordem.id_os;
-  document.getElementById("clienteSelect").value = ordem.id_cliente;
-  document.getElementById("descricao").value = ordem.descricao;
-  document.getElementById("status").value = ordem.status;
-  equipamentosSelecionados = ordem.equipamentos.map(e => e.id || e.id_equipamento);
+  document.getElementById("clienteSelect").value = ordem.id_cliente ?? "";
+  document.getElementById("descricao").value = ordem.descricao || "";
+  document.getElementById("status").value = ordem.status || "Aberta";
+  equipamentosSelecionados = ordem.equipamentos?.map(e => e.id ?? e.id_equipamento) ?? [];
   renderizarTags();
   atualizarDropdown();
+
+  // Normalizar data_encerramento
+  const dataEnc = ordem.data_encerramento;
+  if (dataEnc) {
+    const parsed = new Date(dataEnc);
+    if (!isNaN(parsed.getTime())) {
+      document.getElementById("data_encerramento").value = parsed.toISOString().slice(0, 10);
+    } else {
+      // tentar converter se vier no formato DD/MM/YYYY
+      const partes = dataEnc.split("/");
+      if (partes.length === 3)
+        document.getElementById("data_encerramento").value = `${partes[2]}-${partes[1]}-${partes[0]}`;
+      else
+        document.getElementById("data_encerramento").value = "";
+    }
+  } else {
+    document.getElementById("data_encerramento").value = "";
+  }
 
   document.getElementById("ordemModalTitulo").textContent = "Editar Ordem";
   bootstrap.Modal.getOrCreateInstance(document.getElementById("ordemModal")).show();
@@ -195,15 +220,15 @@ document.getElementById("ordemForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const clienteValue = document.getElementById("clienteSelect").value;
-  if (!clienteValue || isNaN(clienteValue)) {
-    return alert("Selecione um cliente válido!");
-  }
+  if (!clienteValue || isNaN(clienteValue)) return alert("Selecione um cliente válido!");
 
+  const dataEncValue = document.getElementById("data_encerramento").value;
   const payload = {
     id_cliente: parseInt(clienteValue),
     equipamentos: equipamentosSelecionados,
     descricao: document.getElementById("descricao").value,
-    status: document.getElementById("status").value
+    status: document.getElementById("status").value,
+    data_encerramento: dataEncValue || null
   };
 
   const id = document.getElementById("ordemId").value;
@@ -220,7 +245,7 @@ document.getElementById("ordemForm").addEventListener("submit", async (e) => {
     bootstrap.Modal.getInstance(document.getElementById("ordemModal")).hide();
     await carregarOrdens();
   } else {
-    const erro = await res.json();
+    const erro = await res.json().catch(()=>({detail: "Erro desconhecido"}));
     alert("Erro ao salvar ordem: " + JSON.stringify(erro.detail || erro));
   }
 });

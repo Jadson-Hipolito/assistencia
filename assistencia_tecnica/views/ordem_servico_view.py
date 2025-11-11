@@ -12,7 +12,8 @@ def criar_ordem(dados):
         id_cliente=dados["id_cliente"],
         equipamentos=dados.get("equipamentos", []),
         descricao=dados["descricao"],
-        status=dados.get("status", "Aberta")
+        status=dados.get("status", "Aberta"),
+        data_encerramento=dados.get("data_encerramento")
     )
     ordem.salvar()
     return ordem.to_dict()
@@ -25,6 +26,7 @@ def atualizar_ordem(id_os, dados):
     ordem.equipamentos = dados.get("equipamentos", [])
     ordem.descricao = dados["descricao"]
     ordem.status = dados["status"]
+    ordem.data_encerramento = dados.get("data_encerramento")
     ordem.salvar()
     return ordem.to_dict()
 
