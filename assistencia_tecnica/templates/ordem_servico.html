@@ -21,18 +21,20 @@
   <tbody></tbody>
 </table>
 
-<!-- Modal de criação -->
-<div class="modal fade" id="novaOrdemModal" tabindex="-1">
+<!-- Modal Criação / Edição -->
+<div class="modal fade" id="ordemModal" tabindex="-1">
   <div class="modal-dialog">
-    <form class="modal-content" id="novaOrdemForm">
+    <form class="modal-content" id="ordemForm">
       <div class="modal-header">
-        <h5 class="modal-title">Nova Ordem de Serviço</h5>
+        <h5 class="modal-title" id="ordemModalTitulo">Nova Ordem</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
+        <input type="hidden" id="ordemId">
+
         <label>Cliente</label>
-        <select class="form-control mb-2" id="clienteSelect" name="id_cliente" required>
+        <select class="form-control mb-2" id="clienteSelect" required>
           <option value="">Selecione...</option>
         </select>
 
@@ -63,10 +65,11 @@
 
 <script>
 const API = "http://127.0.0.1:8000";
+let modoEdicao = false;
 let equipamentos = [];
 let equipamentosSelecionados = [];
 
-// ---------- Carregamento de dados ----------
+// === Carregar Ordens ===
 async function carregarOrdens() {
   const res = await fetch(`${API}/ordens/`);
   const data = await res.json();
@@ -82,33 +85,32 @@ async function carregarOrdens() {
         <td>${o.descricao}</td>
         <td>${o.status}</td>
         <td>
+          <button class="btn btn-sm btn-outline-warning me-2" onclick="abrirEdicao(${o.id_os})">Editar</button>
           <button class="btn btn-sm btn-outline-danger" onclick="deletarOrdem(${o.id_os})">Excluir</button>
         </td>
       </tr>`;
   });
 }
 
+// === Carregar Clientes ===
 async function carregarClientes() {
   const res = await fetch(`${API}/clientes/`);
   const data = await res.json();
   const select = document.getElementById("clienteSelect");
   select.innerHTML = '<option value="">Selecione...</option>';
-
-  // Corrigido: usar c.id que o backend retorna
   data.forEach(c => {
-    if(c.id !== null && c.id !== undefined) {
-      select.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
-    }
+    const id = c.id ?? c.id_cliente;
+    select.innerHTML += `<option value="${id}">${c.nome}</option>`;
   });
 }
 
+// === Carregar Equipamentos ===
 async function carregarEquipamentos() {
   const res = await fetch(`${API}/equipamentos/`);
   equipamentos = await res.json();
   atualizarDropdown();
 }
 
-// ---------- Dropdown de equipamentos ----------
 function atualizarDropdown() {
   const select = document.getElementById("equipamentoSelect");
   select.innerHTML = '<option value="">Selecione...</option>';
@@ -121,7 +123,7 @@ function atualizarDropdown() {
 
 function adicionarEquipamento() {
   const select = document.getElementById("equipamentoSelect");
-  const id = parseInt(select.value, 10);
+  const id = parseInt(select.value);
   if (!id || equipamentosSelecionados.includes(id)) return;
   equipamentosSelecionados.push(id);
   renderizarTags();
@@ -146,14 +148,39 @@ function renderizarTags() {
   });
 }
 
-// ---------- Ações ----------
-async function deletarOrdem(id) {
-  if (!confirm("Deseja realmente excluir esta ordem?")) return;
-  await fetch(`${API}/ordens/${id}`, { method: "DELETE" });
-  await carregarOrdens();
+// === Abrir Modal Nova Ordem ===
+function abrirNovaOrdem() {
+  modoEdicao = false;
+  equipamentosSelecionados = [];
+  document.getElementById("ordemForm").reset();
+  document.getElementById("equipamentoTags").innerHTML = "";
+  document.getElementById("ordemId").value = "";
+  document.getElementById("ordemModalTitulo").textContent = "Nova Ordem";
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("ordemModal")).show();
+  atualizarDropdown();
 }
 
-document.getElementById("novaOrdemForm").addEventListener("submit", async (e) => {
+// === Abrir Modal Edição ===
+async function abrirEdicao(id) {
+  modoEdicao = true;
+  const res = await fetch(`${API}/ordens/${id}`);
+  if (!res.ok) return alert("Ordem não encontrada");
+  const ordem = await res.json();
+
+  document.getElementById("ordemId").value = ordem.id_os;
+  document.getElementById("clienteSelect").value = ordem.id_cliente;
+  document.getElementById("descricao").value = ordem.descricao;
+  document.getElementById("status").value = ordem.status;
+  equipamentosSelecionados = ordem.equipamentos.map(e => e.id);
+  renderizarTags();
+  atualizarDropdown();
+
+  document.getElementById("ordemModalTitulo").textContent = "Editar Ordem";
+  bootstrap.Modal.getOrCreateInstance(document.getElementById("ordemModal")).show();
+}
+
+// === Salvar (Criar ou Editar) ===
+document.getElementById("ordemForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const clienteValue = document.getElementById("clienteSelect").value;
@@ -162,39 +189,39 @@ document.getElementById("novaOrdemForm").addEventListener("submit", async (e) =>
   }
 
   const payload = {
-    id_cliente: parseInt(clienteValue, 10),
+    id_cliente: parseInt(clienteValue),
     equipamentos: equipamentosSelecionados,
     descricao: document.getElementById("descricao").value,
     status: document.getElementById("status").value
   };
 
-  const res = await fetch(`${API}/ordens/`, {
-    method: "POST",
+  const id = document.getElementById("ordemId").value;
+  const method = modoEdicao ? "PUT" : "POST";
+  const url = modoEdicao ? `${API}/ordens/${id}` : `${API}/ordens/`;
+
+  const res = await fetch(url, {
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
   if (res.ok) {
-    bootstrap.Modal.getInstance(document.getElementById("novaOrdemModal")).hide();
-    equipamentosSelecionados = [];
-    document.getElementById("equipamentoTags").innerHTML = "";
-    e.target.reset();
+    bootstrap.Modal.getInstance(document.getElementById("ordemModal")).hide();
     await carregarOrdens();
   } else {
     const erro = await res.json();
-    alert("Erro ao criar ordem: " + JSON.stringify(erro.detail || erro));
+    alert("Erro ao salvar ordem: " + JSON.stringify(erro.detail || erro));
   }
 });
 
-async function abrirNovaOrdem() {
-  equipamentosSelecionados = [];
-  document.getElementById("novaOrdemForm").reset();
-  document.getElementById("equipamentoTags").innerHTML = "";
-  atualizarDropdown();
-  bootstrap.Modal.getOrCreateInstance(document.getElementById("novaOrdemModal")).show();
+// === Deletar ===
+async function deletarOrdem(id) {
+  if (!confirm("Deseja realmente excluir esta ordem?")) return;
+  await fetch(`${API}/ordens/${id}`, { method: "DELETE" });
+  await carregarOrdens();
 }
 
-// ---------- Inicialização ----------
+// === Inicialização ===
 (async function init() {
   await carregarClientes();
   await carregarEquipamentos();
