@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2>Visitas Técnicas</h2>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaVisitaModal">Nova Visita</button>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#visitaModal" onclick="abrirModalNovaVisita()">Nova Visita</button>
 </div>
 
 <table class="table table-striped" id="visitasTable">
@@ -22,28 +22,30 @@
 </table>
 
 <!-- Modal -->
-<div class="modal fade" id="novaVisitaModal" tabindex="-1">
+<div class="modal fade" id="visitaModal" tabindex="-1">
   <div class="modal-dialog">
-    <form class="modal-content" id="novaVisitaForm">
+    <form class="modal-content" id="visitaForm">
       <div class="modal-header">
-        <h5 class="modal-title">Nova Visita Técnica</h5>
+        <h5 class="modal-title" id="modalVisitaTitulo">Nova Visita Técnica</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <label for="osSelect" class="form-label">Ordem de Serviço</label>
+        <input type="hidden" name="id_visita" id="id_visita">
+
+        <label class="form-label">Ordem de Serviço</label>
         <select class="form-control mb-2" id="osSelect" name="id_os" required></select>
 
-        <label for="funcionarioSelect" class="form-label">Técnico</label>
+        <label class="form-label">Técnico</label>
         <select class="form-control mb-2" id="funcionarioSelect" name="funcionario_id" required></select>
 
-        <label for="dataInput" class="form-label">Data</label>
-        <input class="form-control mb-2" type="date" name="data" required>
+        <label class="form-label">Data</label>
+        <input class="form-control mb-2" type="date" name="data" id="dataInput" required>
 
-        <label for="horarioInput" class="form-label">Horário</label>
-        <input class="form-control mb-2" type="time" name="horario">
+        <label class="form-label">Horário</label>
+        <input class="form-control mb-2" type="time" name="horario" id="horarioInput">
 
-        <label for="observacoesInput" class="form-label">Observações</label>
-        <textarea class="form-control mb-2" name="observacoes" placeholder="Observações"></textarea>
+        <label class="form-label">Observações</label>
+        <textarea class="form-control mb-2" name="observacoes" id="observacoesInput" placeholder="Observações"></textarea>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -72,6 +74,7 @@ async function carregarVisitas() {
       <td>${v.horario ?? ""}</td>
       <td>${v.observacoes ?? ""}</td>
       <td>
+        <button class="btn btn-sm btn-outline-primary" onclick="editarVisita(${v.id_visita})">Editar</button>
         <button class="btn btn-sm btn-outline-danger" onclick="deletarVisita(${v.id_visita})">Excluir</button>
       </td>
     `;
@@ -93,94 +96,108 @@ async function carregarOrdens() {
   });
 }
 
-// --- CARREGAR FUNCIONÁRIOS (versão debug + fallback) ---
+// --- CARREGAR FUNCIONÁRIOS ---
 async function carregarFuncionarios() {
-  try {
-    const res = await fetch(`${API}/funcionarios/`);
-    const data = await res.json();
-    console.log("carregarFuncionarios - dados recebidos:", data); // <<--- veja o console
-
-    const select = document.getElementById("funcionarioSelect");
-    select.innerHTML = '<option value="">Selecione um Técnico</option>';
-
-    data.forEach((f, idx) => {
-      // Tentar vários nomes comuns de campo de id
-      const id = f.id_funcionario ?? f.id ?? f.idFuncionario ?? f.employee_id ?? null;
-
-      const opt = document.createElement("option");
-      // Se não encontrou um id numérico, use um fallback seguro (índice) mas marque como inválido
-      if (id == null) {
-        // registra para depuração
-        console.warn(`Funcionário sem ID encontrado na posição ${idx}:`, f);
-        opt.value = ""; // mantém inválido
-      } else {
-        opt.value = id;
-      }
-
-      // texto amigável
-      opt.textContent = `${f.nome ?? f.name ?? "Sem nome"}${id != null ? ` (ID ${id})` : ""}`;
-      select.appendChild(opt);
-    });
-  } catch (err) {
-    console.error("Erro ao carregar funcionários:", err);
-    alert("Erro ao carregar técnicos. Veja o console.");
-  }
+  const res = await fetch(`${API}/funcionarios/`);
+  const data = await res.json();
+  const select = document.getElementById("funcionarioSelect");
+  select.innerHTML = '<option value="">Selecione um Técnico</option>';
+  data.forEach(f => {
+    const id = f.id_funcionario ?? f.id ?? f.employee_id ?? null;
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = `${f.nome ?? "Sem nome"} (ID ${id})`;
+    select.appendChild(opt);
+  });
 }
-
 
 // --- CRIAR VISITA ---
 async function criarVisita(payload) {
-  if (!payload.id_os || !payload.tecnico || !payload.data) {
-    alert("Ordem, Técnico e Data são obrigatórios!");
-    return;
-  }
-
   const res = await fetch(`${API}/visitas/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
-
   if (!res.ok) {
-    const text = await res.text();
-    console.error("Erro ao salvar visita:", text);
-    alert("Erro ao salvar visita. Verifique o console.");
-    return;
+    const txt = await res.text();
+    console.error("Erro criar visita:", txt);
+    alert("Erro ao criar visita.");
+  } else {
+    await carregarVisitas();
   }
+}
 
-  await carregarVisitas();
+// --- ATUALIZAR VISITA ---
+async function atualizarVisita(payload) {
+  const res = await fetch(`${API}/visitas/${payload.id_visita}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error("Erro atualizar visita:", txt);
+    alert("Erro ao atualizar visita.");
+  } else {
+    await carregarVisitas();
+  }
 }
 
 // --- DELETAR VISITA ---
 async function deletarVisita(id) {
-  const res = await fetch(`${API}/visitas/${id}`, { method: "DELETE" });
-  if (!res.ok) {
-    alert("Erro ao deletar visita.");
-    return;
-  }
+  if (!confirm("Deseja realmente excluir esta visita?")) return;
+  await fetch(`${API}/visitas/${id}`, { method: "DELETE" });
   await carregarVisitas();
 }
 
+// --- EDITAR VISITA ---
+async function editarVisita(id) {
+  const res = await fetch(`${API}/visitas/${id}`);
+  if (!res.ok) {
+    alert("Visita não encontrada!");
+    return;
+  }
+  const v = await res.json();
+  document.getElementById("modalVisitaTitulo").textContent = "Editar Visita Técnica";
+  document.getElementById("id_visita").value = v.id_visita;
+  document.getElementById("osSelect").value = v.id_os;
+  document.getElementById("funcionarioSelect").value = v.tecnico;
+  document.getElementById("dataInput").value = v.data;
+  document.getElementById("horarioInput").value = v.horario ?? "";
+  document.getElementById("observacoesInput").value = v.observacoes ?? "";
+  new bootstrap.Modal(document.getElementById("visitaModal")).show();
+}
+
+// --- NOVA VISITA ---
+function abrirModalNovaVisita() {
+  document.getElementById("modalVisitaTitulo").textContent = "Nova Visita Técnica";
+  document.getElementById("visitaForm").reset();
+  document.getElementById("id_visita").value = "";
+}
+
 // --- SUBMIT FORM ---
-document.getElementById("novaVisitaForm").addEventListener("submit", async (e) => {
+document.getElementById("visitaForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const form = e.target;
+  const id = document.getElementById("id_visita").value;
   const payload = {
-    id_os: parseInt(form.id_os.value),
-    tecnico: parseInt(form.funcionario_id.value), // 👈 Corrigido aqui
-    data: form.data.value,
-    horario: form.horario.value || null,
-    observacoes: form.observacoes.value || null
+    id_visita: id ? parseInt(id) : null,
+    id_os: parseInt(document.getElementById("osSelect").value),
+    tecnico: parseInt(document.getElementById("funcionarioSelect").value),
+    data: document.getElementById("dataInput").value,
+    horario: document.getElementById("horarioInput").value || null,
+    observacoes: document.getElementById("observacoesInput").value || null
   };
 
   if (isNaN(payload.id_os) || isNaN(payload.tecnico)) {
-    alert("Selecione Ordem e Técnico válidos!");
+    alert("Selecione uma Ordem e um Técnico válidos!");
     return;
   }
 
-  await criarVisita(payload);
-  form.reset();
-  bootstrap.Modal.getInstance(document.getElementById("novaVisitaModal")).hide();
+  if (id) await atualizarVisita(payload);
+  else await criarVisita(payload);
+
+  bootstrap.Modal.getInstance(document.getElementById("visitaModal")).hide();
+  e.target.reset();
 });
 
 // --- INIT ---
